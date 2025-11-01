@@ -7,15 +7,14 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
-import java.util.Random;
-
 public class UIGrid extends FlexLayout {
 
     private final int size;
     private final Div[][] cells;
-    private final Random random = new Random();
+    private final GameService game;
 
     public UIGrid(GameService game) {
+        this.game = game;
         this.size = game.board().getSize();
         this.cells = new Div[size][size];
 
@@ -33,49 +32,51 @@ public class UIGrid extends FlexLayout {
                 cell.getStyle().set("align-items", "center");
                 cell.getStyle().set("justify-content", "center");
 
-                final int rr = r, cc = c;
+                final int rr = r;
 
-                cell.addClickListener(e -> {
-                    try {
-                        if (cell.getComponentCount() > 0) {
-                            Notification.show("To pole jest już zajęte!");
-                            return;
-                        }
-
-                        // losowanie 1–6
-                        int roll = random.nextInt(6) + 1;
-                        Project rolledProject = rollToProject(roll);
-
-                        // umieszczamy projekt w grze
-                        game.place(rr, cc, rolledProject);
-
-                        // pokazujemy emoji
-                        Span emoji = new Span(getEmoji(rolledProject));
-                        emoji.getStyle().set("font-size", "56px");
-                        cell.add(emoji);
-
-                        Notification.show("Wypadło: " + roll + " → " + rolledProject);
-
-                    } catch (Exception ex) {
-                        Notification.show(ex.getMessage());
-                    }
-                });
-
+                cell.addClickListener(e -> handleCellClick(rr, cell));
                 add(cell);
                 cells[r][c] = cell;
             }
         }
     }
 
-    private Project rollToProject(int roll) {
-        return switch (roll) {
-            case 1, 2 -> Project.DOM;
-            case 3 -> Project.LAS;
-            case 4 -> Project.JEZIORO;
-            case 5 -> Project.FABRYKA;
-            case 6 -> Project.PLAC;
-            default -> throw new IllegalArgumentException("Nieprawidłowy wynik rzutu kostką: " + roll);
-        };
+    private void handleCellClick(int row, Div cell) {
+        try {
+            if (!game.isRoundActive()) {
+                Notification.show("Najpierw rzuć kostkami!");
+                return;
+            }
+
+            if (cell.getComponentCount() > 0) {
+                Notification.show("To pole jest już zajęte!");
+                return;
+            }
+
+            var result = game.place(row);
+            addEmoji(result.row(), result.col(), result.project());
+
+            clearHighlights();
+
+            if (!result.roundEnded() && game.getTurnStage() == 2) {
+                highlightColumn(game.d2() - 1);
+            }
+
+            if (result.roundEnded()) {
+                Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
+            }
+
+            Notification.show(result.message());
+
+        } catch (Exception ex) {
+            Notification.show(ex.getMessage());
+        }
+    }
+
+    private void addEmoji(int row, int col, Project p) {
+        Span emoji = new Span(getEmoji(p));
+        emoji.getStyle().set("font-size", "50px");
+        cells[row][col].add(emoji);
     }
 
     private String getEmoji(Project p) {

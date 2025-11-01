@@ -8,7 +8,7 @@
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/polymer-legacy-adapter": "24.4.13",
     "@vaadin/react-components": "24.4.13",
-    "@vaadin/router": "1.7.5",
+    "@vaadin/router": "^2.0.0",
     "@vaadin/vaadin-development-mode-detector": "2.0.7",
     "@vaadin/vaadin-lumo-styles": "24.4.13",
     "@vaadin/vaadin-material-styles": "24.4.13",
@@ -27,7 +27,7 @@
     "@rollup/pluginutils": "5.1.2",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",
-    "@vitejs/plugin-react": "4.3.2",
+    "@vitejs/plugin-react": "^4.7.0",
     "async": "3.2.6",
     "glob": "10.4.5",
     "rollup-plugin-brotli": "3.1.0",
@@ -35,7 +35,7 @@
     "strip-css-comments": "5.0.0",
     "transform-ast": "2.4.4",
     "typescript": "5.4.5",
-    "vite": "5.4.8",
+    "vite": "^6.4.1",
     "vite-plugin-checker": "0.6.4",
     "workbox-build": "7.1.1",
     "workbox-core": "7.3.0",
@@ -81,7 +81,7 @@
       "workbox-core": "7.3.0",
       "workbox-precaching": "7.3.0"
     },
-    "hash": "52cc607c8d8e29b46e2ca28425ae7164dcc1cd637d763aee540774077d1bf6f8"
+    "hash": "d8cbc71e3a5c9be4b93f445b1ca5b387ab806030c6b896db1967dfc0cf47935f"
   },
   "overrides": {
     "@vaadin/bundles": "$@vaadin/bundles",
