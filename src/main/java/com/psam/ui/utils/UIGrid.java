@@ -7,12 +7,15 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
+import java.util.Random;
+
 public class UIGrid extends FlexLayout {
 
     private final int size;
     private final Div[][] cells;
+    private final Random random = new Random();
 
-    public UIGrid(GameService game, ProjectPicker picker) {
+    public UIGrid(GameService game) {
         this.size = game.board().getSize();
         this.cells = new Div[size][size];
 
@@ -39,11 +42,19 @@ public class UIGrid extends FlexLayout {
                             return;
                         }
 
-                        game.place(rr, cc, picker.getValue());
+                        // losowanie 1–6
+                        int roll = random.nextInt(6) + 1;
+                        Project rolledProject = rollToProject(roll);
 
-                        Span emoji = new Span(getEmoji(picker.getValue()));
+                        // umieszczamy projekt w grze
+                        game.place(rr, cc, rolledProject);
+
+                        // pokazujemy emoji
+                        Span emoji = new Span(getEmoji(rolledProject));
                         emoji.getStyle().set("font-size", "56px");
                         cell.add(emoji);
+
+                        Notification.show("Wypadło: " + roll + " → " + rolledProject);
 
                     } catch (Exception ex) {
                         Notification.show(ex.getMessage());
@@ -56,13 +67,24 @@ public class UIGrid extends FlexLayout {
         }
     }
 
+    private Project rollToProject(int roll) {
+        return switch (roll) {
+            case 1, 2 -> Project.DOM;
+            case 3 -> Project.LAS;
+            case 4 -> Project.JEZIORO;
+            case 5 -> Project.FABRYKA;
+            case 6 -> Project.PLAC;
+            default -> throw new IllegalArgumentException("Nieprawidłowy wynik rzutu kostką: " + roll);
+        };
+    }
+
     private String getEmoji(Project p) {
         return switch (p) {
-            case DOM -> "\uD83C\uDFE0";        // 🏠
-            case LAS -> "\uD83C\uDF33";        // 🌳
-            case JEZIORO -> "\uD83C\uDF0A";    // 🌊
-            case FABRYKA -> "\u2699\uFE0F";    // ⚙️
-            case PLAC -> "\uD83D\uDDFD";       // 🗽
+            case DOM -> "\uD83C\uDFE0";      // 🏠
+            case LAS -> "\uD83C\uDF33";      // 🌳
+            case JEZIORO -> "\uD83C\uDF0A";  // 🌊
+            case FABRYKA -> "\u2699\uFE0F";  // ⚙️
+            case PLAC -> "\uD83D\uDDFD";     // 🗽
         };
     }
 

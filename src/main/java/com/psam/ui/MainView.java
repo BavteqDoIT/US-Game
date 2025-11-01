@@ -21,7 +21,7 @@ public class MainView extends VerticalLayout {
         GameLayout gameLayout = new GameLayout();
 
         ProjectPicker picker = new ProjectPicker();
-        UIGrid grid = new UIGrid(game, picker);
+        UIGrid grid = new UIGrid(game);
         UIButtons buttons = new UIButtons(
                 game,
                 grid::clearHighlights,
