@@ -12,11 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Route("end")
 public class EndScreen extends VerticalLayout {
 
-    private final GameService gameService;
 
     @Autowired
     public EndScreen(GameService gameService) {
-        this.gameService = gameService;
 
         setSizeFull();
         setAlignItems(FlexComponent.Alignment.CENTER);
@@ -25,8 +23,8 @@ public class EndScreen extends VerticalLayout {
         H1 title = new H1("US-Game");
 
         Button restart = new Button("Zagraj ponownie", e -> {
-            gameService.resetGame(); // 👈 resetuje licznik rund i planszę
-            UI.getCurrent().navigate(GameScreen.class); // powrót do gry
+            gameService.resetGame();
+            UI.getCurrent().navigate(StartScreen.class);
         });
 
         add(title, restart);

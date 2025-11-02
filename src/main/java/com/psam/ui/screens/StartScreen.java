@@ -7,7 +7,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
 
-@Route("") // lub np. @Route("start") jeśli chcesz mieć ścieżkę /start
+@Route("")
 public class StartScreen extends VerticalLayout {
 
     public StartScreen() {

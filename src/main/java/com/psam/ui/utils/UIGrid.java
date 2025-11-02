@@ -85,8 +85,8 @@ public class UIGrid extends FlexLayout {
         }
     }
 
-    private void addEmoji(int row, int col, Project p) {
-        Span emoji = new Span(getEmoji(p));
+    private void addEmoji(int row, int col, Project project) {
+        Span emoji = new Span(getEmoji(project));
         emoji.getStyle().set("font-size", "50px");
         cells[row][col].add(emoji);
     }
@@ -96,7 +96,7 @@ public class UIGrid extends FlexLayout {
             case DOM -> "\uD83C\uDFE0";      // 🏠
             case LAS -> "\uD83C\uDF33";      // 🌳
             case JEZIORO -> "\uD83C\uDF0A";  // 🌊
-            case FABRYKA -> "⚙️";  // ⚙️
+            case FABRYKA -> "⚙️";
             case PLAC -> "\uD83D\uDDFD";     // 🗽
         };
     }
