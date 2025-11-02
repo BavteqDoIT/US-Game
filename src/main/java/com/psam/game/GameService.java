@@ -12,17 +12,25 @@ public class GameService {
     private int lastD1 = 0, lastD2 = 0;
     private int turnStage = 0;     // 0 - brak rundy, 1 - pierwszy ruch, 2 - drugi ruch
     private boolean roundActive = false;
+    private int roundCount = 0;
+
+    // maksymalna liczba rund w grze (możesz zmienić np. na 10)
+    private static final int MAX_ROUNDS = 9;
 
     public Board board() { return board; }
     public int d1() { return lastD1; }
     public int d2() { return lastD2; }
+    public void setRoundCount(int roundCount) { this.roundCount = roundCount; }
+    public int getRoundCount() { return this.roundCount; }
     public int getTurnStage() { return turnStage; }
     public boolean isRoundActive() { return roundActive; }
-
 
     public void startRound() {
         if (roundActive)
             throw new IllegalStateException("Runda już trwa!");
+
+        if (isGameOver())
+            throw new IllegalStateException("Gra już się zakończyła!");
 
         lastD1 = 1 + rng.nextInt(6);
         lastD2 = 1 + rng.nextInt(6);
@@ -30,9 +38,7 @@ public class GameService {
         roundActive = true;
     }
 
-
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
-
 
     public PlaceResult place(int row) {
         if (!roundActive)
@@ -61,13 +67,15 @@ public class GameService {
 
             int points = scoreRound();
             resetRound();
+            roundCount++; // Zwiększamy licznik rund po zakończeniu
 
             return new PlaceResult(
                     project,
                     row,
                     column,
                     "Drugi ruch: " + project + " w kolumnie " + (column + 1)
-                            + ". Runda zakończona! Punkty: " + points,
+                            + ". Runda zakończona! Punkty: " + points
+                            + " (Runda " + roundCount + "/" + MAX_ROUNDS + ")",
                     true
             );
         }
@@ -113,5 +121,17 @@ public class GameService {
         lastD2 = 0;
         turnStage = 0;
         roundActive = false;
+    }
+
+    /** Sprawdza, czy gra się zakończyła */
+    public boolean isGameOver() {
+        return roundCount >= MAX_ROUNDS;
+    }
+
+    /** Resetuje stan gry do początkowego */
+    public void resetGame() {
+        board.clear();
+        roundCount = 0;
+        resetRound();
     }
 }
