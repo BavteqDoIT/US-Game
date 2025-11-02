@@ -1,7 +1,6 @@
 package com.psam.ui.screens;
 
 import com.psam.game.GameService;
-import com.psam.ui.MainView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
@@ -27,7 +26,7 @@ public class EndScreen extends VerticalLayout {
 
         Button restart = new Button("Zagraj ponownie", e -> {
             gameService.resetGame(); // 👈 resetuje licznik rund i planszę
-            UI.getCurrent().navigate(MainView.class); // powrót do gry
+            UI.getCurrent().navigate(GameScreen.class); // powrót do gry
         });
 
         add(title, restart);

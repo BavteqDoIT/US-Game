@@ -1,6 +1,5 @@
 package com.psam.ui.screens;
 
-import com.psam.ui.MainView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
@@ -18,7 +17,7 @@ public class StartScreen extends VerticalLayout {
 
         H1 title = new H1("US-Game");
 
-        Button startButton = new Button("Start", e -> UI.getCurrent().navigate(MainView.class));
+        Button startButton = new Button("Start", e -> UI.getCurrent().navigate(GameScreen.class));
         startButton.getStyle().set("font-size", "24px");
         startButton.getStyle().set("padding", "20px 40px");
 
