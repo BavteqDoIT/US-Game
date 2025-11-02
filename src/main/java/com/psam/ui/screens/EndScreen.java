@@ -4,6 +4,7 @@ import com.psam.game.GameService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
@@ -21,12 +22,13 @@ public class EndScreen extends VerticalLayout {
         setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
         H1 title = new H1("US-Game");
+        H2 points = new H2(String.valueOf(gameService.getTotalPoints()));
 
         Button restart = new Button("Zagraj ponownie", e -> {
             gameService.resetGame();
             UI.getCurrent().navigate(StartScreen.class);
         });
 
-        add(title, restart);
+        add(title, points, restart);
     }
 }

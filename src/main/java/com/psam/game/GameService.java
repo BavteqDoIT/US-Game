@@ -13,6 +13,8 @@ public class GameService {
     private int turnStage = 0;     // 0 - brak rundy, 1 - pierwszy ruch, 2 - drugi ruch
     private boolean roundActive = false;
     private int roundCount = 0;
+    private int totalPoints = 0;
+
 
     // maksymalna liczba rund w grze (możesz zmienić np. na 10)
     private static final int MAX_ROUNDS = 9;
@@ -51,30 +53,37 @@ public class GameService {
             column = lastD1 - 1;
             project = rollToProject(lastD2);
             board.set(row, column, project);
+
+            int gainedPoints = board.getPoints(row, column);
+            totalPoints += gainedPoints;
+
             turnStage = 2;
             return new PlaceResult(
                     project,
                     row,
                     column,
-                    "Pierwszy ruch: " + project + " w kolumnie " + (column + 1),
+                    "Pierwszy ruch: " + project + " w kolumnie " + (column + 1)
+                            + " (+ " + gainedPoints + " pkt.)",
                     false
             );
-
         } else if (turnStage == 2) {
             column = lastD2 - 1;
             project = rollToProject(lastD1);
             board.set(row, column, project);
 
-            int points = scoreRound();
+            int gainedPoints = board.getPoints(row, column); // ✅ punkty za to jedno pole
+            totalPoints += gainedPoints;                     // ✅ dodajemy do sumy
+
             resetRound();
-            roundCount++; // Zwiększamy licznik rund po zakończeniu
+            roundCount++;
 
             return new PlaceResult(
                     project,
                     row,
                     column,
                     "Drugi ruch: " + project + " w kolumnie " + (column + 1)
-                            + ". Runda zakończona! Punkty: " + points
+                            + ". Runda zakończona! Zdobyto +" + gainedPoints + " pkt."
+                            + " Łącznie: " + totalPoints + " pkt."
                             + " (Runda " + roundCount + "/" + MAX_ROUNDS + ")",
                     true
             );
@@ -83,14 +92,9 @@ public class GameService {
         throw new IllegalStateException("Nieprawidłowy stan rundy!");
     }
 
-    public int scoreRound() {
-        int sum = lastD1 + lastD2;
-        int row = mapSumToRow(sum);
-        int pts = 0;
-        for (int c = 0; c < board.getSize(); c++) {
-            if (!board.isEmpty(row, c)) pts++;
-        }
-        return pts;
+
+    public int getTotalPoints() {
+        return totalPoints;
     }
 
     private int mapSumToRow(int s) {
@@ -123,15 +127,14 @@ public class GameService {
         roundActive = false;
     }
 
-    /** Sprawdza, czy gra się zakończyła */
     public boolean isGameOver() {
         return roundCount >= MAX_ROUNDS;
     }
 
-    /** Resetuje stan gry do początkowego */
     public void resetGame() {
         board.clear();
         roundCount = 0;
         resetRound();
+        totalPoints = 0;
     }
 }

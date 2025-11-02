@@ -22,6 +22,10 @@ public class GameScreen extends VerticalLayout {
         setSizeFull();
         UIGrid grid = new UIGrid(game);
 
+        Button pointsButton = new Button("Points", e -> {
+            game.board().printPointsLayout();
+        });
+
         Button rollButton = new Button("🎲 Rzuć kostkami", e -> {
             try {
                 game.startRound();
@@ -40,6 +44,6 @@ public class GameScreen extends VerticalLayout {
             }
         });
 
-        add(rollButton, grid);
+        add(rollButton, grid, pointsButton);
     }
 }

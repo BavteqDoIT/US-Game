@@ -20,9 +20,11 @@ public class UIGrid extends FlexLayout {
         this.size = game.board().getSize();
         this.cells = new Div[size][size];
 
+
         getStyle().set("display", "grid");
         getStyle().set("grid-template-columns", "repeat(6, 56px)");
         getStyle().set("gap", "4px");
+
 
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
@@ -33,9 +35,20 @@ public class UIGrid extends FlexLayout {
                 cell.getStyle().set("display", "flex");
                 cell.getStyle().set("align-items", "center");
                 cell.getStyle().set("justify-content", "center");
+                cell.getStyle().set("position", "relative");
+                int cellPoints = game.board().getPoints(row, col);
+
+                if (cellPoints > 0) {
+                    Span pointLabel = new Span(String.valueOf(cellPoints));
+                    pointLabel.getStyle().set("position", "absolute");
+                    pointLabel.getStyle().set("bottom", "2px");
+                    pointLabel.getStyle().set("right", "4px");
+                    pointLabel.getStyle().set("font-size", "12px");
+                    pointLabel.getStyle().set("color", "gray");
+                    cell.add(pointLabel);
+                }
 
                 final int lambdaRow = row;
-
                 cell.addClickListener(e -> handleCellClick(lambdaRow, cell));
                 add(cell);
                 cells[row][col] = cell;
@@ -55,7 +68,7 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            if (cell.getComponentCount() > 0) {
+            if (cell.getComponentCount() > 1) {
                 Notification.show("To pole jest już zajęte!");
                 return;
             }
@@ -87,7 +100,7 @@ public class UIGrid extends FlexLayout {
 
     private void addEmoji(int row, int col, Project project) {
         Span emoji = new Span(getEmoji(project));
-        emoji.getStyle().set("font-size", "50px");
+        emoji.getStyle().set("font-size", "40px");
         cells[row][col].add(emoji);
     }
 
