@@ -14,6 +14,7 @@ public class UIGrid extends FlexLayout {
     private final int size;
     private final Div[][] cells;
     private final GameService game;
+    private int activeColumn = -1;
 
     public UIGrid(GameService game) {
         this.game = game;
@@ -68,6 +69,12 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
+            int clickedCol = getColumnIndex(cell);
+            if (activeColumn != -1 && clickedCol != activeColumn) {
+                Notification.show("Błędna kolumna! Wybierz pole w podświetlonej kolumnie.");
+                return;
+            }
+
             if (cell.getComponentCount() > 1) {
                 Notification.show("To pole jest już zajęte!");
                 return;
@@ -115,6 +122,7 @@ public class UIGrid extends FlexLayout {
     }
 
     public void highlightColumn(int col) {
+        activeColumn = col;
         for (int row = 0; row < size; row++) {
             cells[row][col].removeClassName("noHighlight");
             cells[row][col].addClassName("highlighted");
@@ -122,11 +130,23 @@ public class UIGrid extends FlexLayout {
     }
 
     public void clearHighlights() {
+        activeColumn = -1;
         for (int row = 0; row < size; row++) {
             for (int col = 0; col < size; col++) {
                 cells[row][col].removeClassName("highlighted");
                 cells[row][col].addClassName("noHighlight");
             }
         }
+    }
+
+    private int getColumnIndex(Div cell) {
+        for (int row = 0; row < size; row++) {
+            for (int col = 0; col < size; col++) {
+                if (cells[row][col] == cell) {
+                    return col;
+                }
+            }
+        }
+        return -1; // nie znaleziono (nie powinno się zdarzyć)
     }
 }
