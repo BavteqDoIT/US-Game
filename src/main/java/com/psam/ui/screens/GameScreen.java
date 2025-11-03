@@ -26,6 +26,7 @@ public class GameScreen extends VerticalLayout {
 
         UIGrid grid = new UIGrid(game);
         UIPoints points = new UIPoints();
+        game.setUIPoints(points);
 
         String[] ranges = {"3–4", "5–6", "7", "8–9", "10–11"};
         VerticalLayout columnLabels = UILabelFactory.createColumnLabels(ranges);

@@ -1,5 +1,6 @@
 package com.psam.game;
 
+import com.psam.ui.utils.UIPoints;
 import org.springframework.stereotype.Service;
 import java.util.Random;
 
@@ -14,6 +15,12 @@ public class GameService {
     private boolean roundActive = false;
     private int roundCount = 0;
     private int totalPoints = 0;
+    private int roundPoints = 0;
+    private UIPoints uiPoints;
+
+    public void setUIPoints(UIPoints uiPoints) {
+        this.uiPoints = uiPoints;
+    }
 
 
     // maksymalna liczba rund w grze (możesz zmienić np. na 10)
@@ -55,8 +62,7 @@ public class GameService {
             board.set(row, column, project);
 
             int gainedPoints = board.getPoints(row, column);
-            totalPoints += gainedPoints;
-
+            roundPoints += gainedPoints;
             turnStage = 2;
             return new PlaceResult(
                     project,
@@ -72,11 +78,12 @@ public class GameService {
             board.set(row, column, project);
 
             int gainedPoints = board.getPoints(row, column); // ✅ punkty za to jedno pole
-            totalPoints += gainedPoints;                     // ✅ dodajemy do sumy
+            roundPoints += gainedPoints;
+            totalPoints += roundPoints;
 
-            resetRound();
             roundCount++;
-
+            uiPoints.setRoundScore(roundCount, roundPoints);
+            resetRound();
             return new PlaceResult(
                     project,
                     row,
@@ -97,18 +104,6 @@ public class GameService {
         return totalPoints;
     }
 
-    private int mapSumToRow(int s) {
-        return switch (s) {
-            case 3, 4 -> 0;
-            case 5, 6 -> 1;
-            case 7 -> 2;
-            case 8 -> 3;
-            case 9, 10 -> 4;
-            case 11, 12 -> 5;
-            default -> 0;
-        };
-    }
-
     private Project rollToProject(int roll) {
         return switch (roll) {
             case 1, 2 -> Project.DOM;
@@ -125,6 +120,7 @@ public class GameService {
         lastD2 = 0;
         turnStage = 0;
         roundActive = false;
+        roundPoints = 0;
     }
 
     public boolean isGameOver() {

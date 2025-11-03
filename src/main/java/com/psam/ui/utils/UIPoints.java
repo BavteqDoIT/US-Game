@@ -37,20 +37,20 @@ public class UIPoints extends Div {
         }
     }
 
-//    public void setRoundScore(int round, int score) {
-//        if (round < 1 || round > 9) return;
-//
-//        Div cell = roundCells[round - 1];
-//
-//        if (cell.getComponentCount() > 1) {
-//            cell.remove(cell.getComponentAt(1));
-//        }
-//
-//        Span scoreLabel = new Span(String.valueOf(score));
-//        scoreLabel.getStyle().set("font-size", "16px");
-//        scoreLabel.getStyle().set("font-weight", "bold");
-//        cell.add(scoreLabel);
-//    }
+    public void setRoundScore(int round, int score) {
+        if (round < 1 || round > 9) return;
+
+        Div cell = roundCells[round - 1];
+
+        if (cell.getComponentCount() > 1) {
+            cell.remove(cell.getComponentAt(1));
+        }
+
+        Span scoreLabel = new Span(String.valueOf(score));
+        scoreLabel.getStyle().set("font-size", "16px");
+        scoreLabel.getStyle().set("font-weight", "bold");
+        cell.add(scoreLabel);
+    }
 //
 //    public void clearScores() {
 //        for (Div cell : roundCells) {
