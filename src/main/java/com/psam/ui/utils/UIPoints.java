@@ -23,7 +23,6 @@ public class UIPoints extends Div {
             roundCell.getStyle().set("align-items", "center");
             roundCell.getStyle().set("justify-content", "center");
 
-            // Numer rundy w rogu
             Span roundIndex = new Span(String.valueOf(i + 1));
             roundIndex.getStyle().set("position", "absolute");
             roundIndex.getStyle().set("bottom", "2px");
@@ -32,8 +31,19 @@ public class UIPoints extends Div {
             roundIndex.getStyle().set("color", "gray");
             roundCell.add(roundIndex);
 
-            add(roundCell);
+            if (i == 2 || i == 5 || i == 8) {
+                Span star = new Span("⭐");
+                star.getStyle().set("position", "absolute");
+                star.getStyle().set("top", "2px");
+                star.getStyle().set("right", "4px");
+                star.getStyle().set("font-size", "14px");
+                star.getStyle().set("color", "gold");
+                star.getElement().setAttribute("data-type", "star");
+                roundCell.add(star);
+            }
+
             roundCells[i] = roundCell;
+            add(roundCell);
         }
     }
 
@@ -42,21 +52,14 @@ public class UIPoints extends Div {
 
         Div cell = roundCells[round - 1];
 
-        if (cell.getComponentCount() > 1) {
-            cell.remove(cell.getComponentAt(1));
-        }
+        cell.getChildren()
+                .filter(c -> "score".equals(c.getElement().getAttribute("data-type")))
+                .forEach(cell::remove);
 
         Span scoreLabel = new Span(String.valueOf(score));
         scoreLabel.getStyle().set("font-size", "16px");
         scoreLabel.getStyle().set("font-weight", "bold");
+        scoreLabel.getElement().setAttribute("data-type", "score");
         cell.add(scoreLabel);
     }
-//
-//    public void clearScores() {
-//        for (Div cell : roundCells) {
-//            if (cell.getComponentCount() > 1) {
-//                cell.remove(cell.getComponentAt(1));
-//            }
-//        }
-//    }
 }
