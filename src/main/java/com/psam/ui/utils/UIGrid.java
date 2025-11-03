@@ -11,24 +11,21 @@ import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
 public class UIGrid extends FlexLayout {
 
-    private final int size;
-    private final Div[][] cells;
+    private final int rows = 5;
+    private final int cols = 6;
+    private final Div[][] cells = new Div[rows][cols];
     private final GameService game;
     private int activeColumn = -1;
 
     public UIGrid(GameService game) {
         this.game = game;
-        this.size = game.board().getSize();
-        this.cells = new Div[size][size];
-
 
         getStyle().set("display", "grid");
-        getStyle().set("grid-template-columns", "repeat(6, 56px)");
+        getStyle().set("grid-template-columns", "repeat(" + cols + ", 56px)");
         getStyle().set("gap", "4px");
 
-
-        for (int row = 0; row < size; row++) {
-            for (int col = 0; col < size; col++) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
                 Div cell = new Div();
                 cell.setWidth("56px");
                 cell.setHeight("56px");
@@ -37,8 +34,8 @@ public class UIGrid extends FlexLayout {
                 cell.getStyle().set("align-items", "center");
                 cell.getStyle().set("justify-content", "center");
                 cell.getStyle().set("position", "relative");
-                int cellPoints = game.board().getPoints(row, col);
 
+                int cellPoints = game.board().getPoints(row, col);
                 if (cellPoints > 0) {
                     Span pointLabel = new Span(String.valueOf(cellPoints));
                     pointLabel.getStyle().set("position", "absolute");
@@ -91,7 +88,6 @@ public class UIGrid extends FlexLayout {
 
             if (result.roundEnded()) {
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
-
                 if (game.getRoundCount() >= 9) {
                     UI.getCurrent().navigate(EndScreen.class);
                     return;
@@ -123,7 +119,7 @@ public class UIGrid extends FlexLayout {
 
     public void highlightColumn(int col) {
         activeColumn = col;
-        for (int row = 0; row < size; row++) {
+        for (int row = 0; row < rows; row++) {
             cells[row][col].removeClassName("noHighlight");
             cells[row][col].addClassName("highlighted");
         }
@@ -131,8 +127,8 @@ public class UIGrid extends FlexLayout {
 
     public void clearHighlights() {
         activeColumn = -1;
-        for (int row = 0; row < size; row++) {
-            for (int col = 0; col < size; col++) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
                 cells[row][col].removeClassName("highlighted");
                 cells[row][col].addClassName("noHighlight");
             }
@@ -140,13 +136,13 @@ public class UIGrid extends FlexLayout {
     }
 
     private int getColumnIndex(Div cell) {
-        for (int row = 0; row < size; row++) {
-            for (int col = 0; col < size; col++) {
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
                 if (cells[row][col] == cell) {
                     return col;
                 }
             }
         }
-        return -1; // nie znaleziono (nie powinno się zdarzyć)
+        return -1;
     }
 }
