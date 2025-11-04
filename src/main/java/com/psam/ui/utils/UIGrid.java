@@ -8,6 +8,8 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import java.util.HashSet;
+import java.util.Set;
 
 public class UIGrid extends FlexLayout {
 
@@ -15,7 +17,7 @@ public class UIGrid extends FlexLayout {
     private final int cols = 6;
     private final Div[][] cells = new Div[rows][cols];
     private final GameService game;
-    private int activeColumn = -1;
+    private final Set<Integer> activeColumns = new HashSet<>();
 
     public UIGrid(GameService game) {
         this.game = game;
@@ -67,8 +69,8 @@ public class UIGrid extends FlexLayout {
             }
 
             int clickedCol = getColumnIndex(cell);
-            if (activeColumn != -1 && clickedCol != activeColumn) {
-                Notification.show("Błędna kolumna! Wybierz pole w podświetlonej kolumnie.");
+            if (!activeColumns.contains(clickedCol)) {
+                Notification.show("Wybierz pole w jednej z podświetlonych kolumn!");
                 return;
             }
 
@@ -77,24 +79,20 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            var result = game.place(row);
+            var result = game.place(row, clickedCol);
             addEmoji(result.row(), result.col(), result.project());
 
-            clearHighlights();
+            Notification.show(result.message());
 
-            if (!result.roundEnded() && game.getTurnStage() == 2) {
-                highlightColumn(game.d2() - 1);
-            }
+            deactivateColumn(clickedCol);
 
             if (result.roundEnded()) {
+                clearHighlights();
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
                 if (game.getRoundCount() >= 9) {
                     UI.getCurrent().navigate(EndScreen.class);
-                    return;
                 }
             }
-
-            Notification.show(result.message());
 
         } catch (Exception ex) {
             Notification.show(ex.getMessage());
@@ -117,16 +115,35 @@ public class UIGrid extends FlexLayout {
         };
     }
 
-    public void highlightColumn(int col) {
-        activeColumn = col;
+    public void highlightRoundColumns() {
+        clearHighlights();
+        activeColumns.clear();
+
+        int col1 = game.d1() - 1;
+        int col2 = game.d2() - 1;
+
+        highlightColumn(col1);
+        highlightColumn(col2);
+    }
+
+    private void highlightColumn(int col) {
+        activeColumns.add(col);
         for (int row = 0; row < rows; row++) {
             cells[row][col].removeClassName("noHighlight");
             cells[row][col].addClassName("highlighted");
         }
     }
 
+    private void deactivateColumn(int col) {
+        activeColumns.remove(col);
+        for (int row = 0; row < rows; row++) {
+            cells[row][col].removeClassName("highlighted");
+            cells[row][col].addClassName("noHighlight");
+        }
+    }
+
     public void clearHighlights() {
-        activeColumn = -1;
+        activeColumns.clear();
         for (int row = 0; row < rows; row++) {
             for (int col = 0; col < cols; col++) {
                 cells[row][col].removeClassName("highlighted");

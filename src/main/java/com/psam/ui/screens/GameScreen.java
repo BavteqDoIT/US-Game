@@ -39,10 +39,10 @@ public class GameScreen extends VerticalLayout {
             try {
                 game.startRound();
                 grid.clearHighlights();
-                grid.highlightColumn(game.d1() - 1);
+                grid.highlightRoundColumns();
 
                 Notification.show("Wyniki: 🎲 " + game.d1() + " i 🎲 " + game.d2() +
-                        " → najpierw kolumna " + game.d1() + ", potem " + game.d2());
+                        " → aktywne kolumny: " + game.d1() + " i " + game.d2());
 
                 if (game.isGameOver()) {
                     UI.getCurrent().navigate("end");
