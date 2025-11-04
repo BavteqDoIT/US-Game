@@ -22,6 +22,7 @@ public class GameService {
     private UIPoints uiPoints;
     private boolean highlightAllColumns = false;
     private boolean waitingForSecondPlacementAfterDouble = false;
+    private boolean acitveBonus=false;
 
     private static final int MAX_ROUNDS = 9;
 
@@ -66,8 +67,8 @@ public class GameService {
         Project project;
         int gainedPoints;
 
-        if (waitingForSecondPlacementAfterDouble) {
-            project = Project.PLAC;
+        if (acitveBonus && !waitingForSecondPlacementAfterDouble) {
+            project = Project.DOM; // WYBÓR PROJEKTU NARAZIE TO DOM
             board.set(row, chosenColumn, project);
             gainedPoints = board.getPoints(row, chosenColumn);
             roundPoints += gainedPoints;
@@ -76,13 +77,42 @@ public class GameService {
             roundCount++;
             uiPoints.setRoundScore(roundCount, roundPoints);
 
-            String msg = "Drugi ruch po dublecie: postawiono Plac w kolumnie " + (chosenColumn + 1)
+            String msg = "BONUS! Postawiono DOM w kolumnie " + (chosenColumn + 1)
                     + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: "
                     + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + ")";
 
             resetRound();
 
             return new PlaceResult(project, row, chosenColumn, msg, true);
+        }
+
+        if (waitingForSecondPlacementAfterDouble) {
+            project = Project.PLAC;
+            board.set(row, chosenColumn, project);
+            gainedPoints = board.getPoints(row, chosenColumn);
+            roundPoints += gainedPoints;
+            waitingForSecondPlacementAfterDouble = false;
+
+            boolean isOver = false;
+                if(isBonusRound()){
+                    highlightAllColumns = true;
+                    acitveBonus = true;
+                } else {
+                    isOver = true;
+                    totalPoints += roundPoints;
+                    roundCount++;
+                    uiPoints.setRoundScore(roundCount, roundPoints);
+                    resetRound();
+                }
+
+
+            String msg = "Drugi ruch po dublecie: postawiono Plac w kolumnie " + (chosenColumn + 1)
+                    + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: "
+                    + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + ")";
+
+
+
+            return new PlaceResult(project, row, chosenColumn, msg, isOver);
         }
 
         if (isDouble(lastD1, lastD2)) {
@@ -160,8 +190,17 @@ public class GameService {
         }
 
         boolean roundEnded = firstColumnUsed && secondColumnUsed;
+        boolean isOver =false;
+        if(roundEnded) {
+            if(isBonusRound()){
+                highlightAllColumns = true;
+                acitveBonus = true;
+            } else {
+                isOver = true;
+            }
+        }
 
-        if (roundEnded) {
+        if (isOver) {
             totalPoints += roundPoints;
             roundCount++;
             uiPoints.setRoundScore(roundCount, roundPoints);
@@ -174,11 +213,13 @@ public class GameService {
                 chosenColumn,
                 "Ruch: " + project + " w kolumnie " + (chosenColumn + 1)
                         + " (+ " + gainedPoints + " pkt.)",
-                roundEnded
+                isOver
         );
     }
 
-
+    public boolean isBonusRound(){
+        return roundCount % 3 == 2;
+    }
     public boolean isDouble(int d1, int d2) {
         return d1 == d2;
     }
@@ -214,6 +255,7 @@ public class GameService {
         highlightAllColumns = false;
         waitingForSecondPlacementAfterDouble = false;
         placed = false;
+        acitveBonus = false;
     }
 
     public boolean isGameOver() {
