@@ -68,10 +68,19 @@ public class GameService {
         int gainedPoints;
 
         if (acitveBonus && !waitingForSecondPlacementAfterDouble) {
-            project = Project.DOM; // WYBÓR PROJEKTU NARAZIE TO DOM
+
+            project = Project.DOM; // WYBÓR PROJEKTU NARAZIE TO DOM TRZEBA ZAIMPLPEMENTOWAC WYBOR EMOJI
             board.set(row, chosenColumn, project);
             gainedPoints = board.getPoints(row, chosenColumn);
             roundPoints += gainedPoints;
+            String placeFrom;
+            if(lastD1 == lastD2){
+                placeFrom = "Dubel!@#!@#!@@";
+            } else if (rollToProject(lastD1) == rollToProject(lastD2)) {
+                placeFrom = "Ten sam projekt!@#!@#";
+            } else {
+                placeFrom = "Po proostu!@#!@#";
+            }
 
             totalPoints += roundPoints;
             roundCount++;
@@ -79,7 +88,7 @@ public class GameService {
 
             String msg = "BONUS! Postawiono DOM w kolumnie " + (chosenColumn + 1)
                     + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: "
-                    + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + ")";
+                    + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + "/" + placeFrom +")";
 
             resetRound();
 
@@ -158,18 +167,23 @@ public class GameService {
 
                 if (isFirstCol) firstColumnUsed = true;
                 if (isSecondCol) secondColumnUsed = true;
+                boolean isOver = false;
 
-                totalPoints += roundPoints;
-                roundCount++;
-                uiPoints.setRoundScore(roundCount, roundPoints);
+                if(isBonusRound()){
+                    highlightAllColumns = true;
+                    acitveBonus = true;
+                } else {
+                    isOver = true;
+                    totalPoints += roundPoints;
+                    roundCount++;
+                    uiPoints.setRoundScore(roundCount, roundPoints);
+                    resetRound();
+                }
 
                 String msg = "Specjalny ruch (drugi): " + project + " w kolumnie " + (chosenColumn + 1)
                         + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: " + totalPoints + " pkt. (Runda "
                         + roundCount + "/" + MAX_ROUNDS + ")";
-
-                resetRound();
-
-                return new PlaceResult(project, row, chosenColumn, msg, true);
+                return new PlaceResult(project, row, chosenColumn, msg, isOver);
             }
         }
 
