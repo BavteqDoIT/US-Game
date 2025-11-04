@@ -39,7 +39,7 @@ public class GameScreen extends VerticalLayout {
             try {
                 game.startRound();
                 grid.clearHighlights();
-                grid.highlightRoundColumns();
+                grid.highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
 
                 Notification.show("Wyniki: 🎲 " + game.d1() + " i 🎲 " + game.d2() +
                         " → aktywne kolumny: " + game.d1() + " i " + game.d2());

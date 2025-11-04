@@ -56,6 +56,8 @@ public class UIGrid extends FlexLayout {
         }
     }
 
+    private boolean waitingForSecondPlacement = false;
+
     private void handleCellClick(int row, Div cell) {
         try {
             if (game.getRoundCount() >= 9) {
@@ -81,8 +83,23 @@ public class UIGrid extends FlexLayout {
 
             var result = game.place(row, clickedCol);
             addEmoji(result.row(), result.col(), result.project());
-
             Notification.show(result.message());
+
+            if (game.shouldHighlightAllColumns()) {
+                highlightAll();
+                waitingForSecondPlacement = true;
+                return;
+            }
+
+            if (waitingForSecondPlacement) {
+                waitingForSecondPlacement = false;
+                clearHighlights();
+                Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
+                if (game.getRoundCount() >= 9) {
+                    UI.getCurrent().navigate(EndScreen.class);
+                }
+                return;
+            }
 
             deactivateColumn(clickedCol);
 
@@ -115,15 +132,20 @@ public class UIGrid extends FlexLayout {
         };
     }
 
-    public void highlightRoundColumns() {
+    public void highlightRoundColumns(boolean isDouble) {
         clearHighlights();
         activeColumns.clear();
+        if (!isDouble) {
+            int col1 = game.d1() - 1;
+            int col2 = game.d2() - 1;
 
-        int col1 = game.d1() - 1;
-        int col2 = game.d2() - 1;
+            highlightColumn(col1);
+            highlightColumn(col2);
+        } else {
+            int col1 = game.d1() - 1;
+            highlightColumn(col1);
+        }
 
-        highlightColumn(col1);
-        highlightColumn(col2);
     }
 
     private void highlightColumn(int col) {
@@ -131,6 +153,12 @@ public class UIGrid extends FlexLayout {
         for (int row = 0; row < rows; row++) {
             cells[row][col].removeClassName("noHighlight");
             cells[row][col].addClassName("highlighted");
+        }
+    }
+
+    public void highlightAll(){
+        for (int col = 0; col < cols; col++) {
+            highlightColumn(col);
         }
     }
 
