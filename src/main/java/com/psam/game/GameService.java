@@ -13,6 +13,7 @@ public class GameService {
     private int lastD1 = 0, lastD2 = 0;
     private boolean firstColumnUsed = false;
     private boolean secondColumnUsed = false;
+    private boolean placed;
 
     private boolean roundActive = false;
     private int roundCount = 0;
@@ -56,11 +57,17 @@ public class GameService {
         if (!roundActive)
             throw new IllegalStateException("Najpierw rozpocznij rundę!");
 
+        int targetColumn1 = lastD1 - 1;
+        int targetColumn2 = lastD2 - 1;
+
+        boolean isFirstCol = chosenColumn == targetColumn1;
+        boolean isSecondCol = chosenColumn == targetColumn2;
+
         Project project;
         int gainedPoints;
 
         if (waitingForSecondPlacementAfterDouble) {
-            project = Project.FABRYKA;
+            project = Project.PLAC;
             board.set(row, chosenColumn, project);
             gainedPoints = board.getPoints(row, chosenColumn);
             roundPoints += gainedPoints;
@@ -69,25 +76,14 @@ public class GameService {
             roundCount++;
             uiPoints.setRoundScore(roundCount, roundPoints);
 
-            String message = "Drugi ruch po dublecie: " + project + " w kolumnie " + (chosenColumn + 1)
-                    + " (+ " + gainedPoints + " pkt.). Runda zakończona! Łącznie: "
+            String msg = "Drugi ruch po dublecie: postawiono Plac w kolumnie " + (chosenColumn + 1)
+                    + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: "
                     + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + ")";
 
             resetRound();
-            highlightAllColumns = false;
-            waitingForSecondPlacementAfterDouble = false;
 
-            return new PlaceResult(project, row, chosenColumn, message, true);
+            return new PlaceResult(project, row, chosenColumn, msg, true);
         }
-
-        int targetColumn1 = lastD1 - 1;
-        int targetColumn2 = lastD2 - 1;
-
-        boolean isFirstCol = chosenColumn == targetColumn1;
-        boolean isSecondCol = chosenColumn == targetColumn2;
-
-        if (!isFirstCol && !isSecondCol && !isDouble(lastD1, lastD2))
-            throw new IllegalArgumentException("Wybrana kolumna nie jest aktywna w tej rundzie!");
 
         if (isDouble(lastD1, lastD2)) {
             project = rollToProject(lastD1);
@@ -99,8 +95,52 @@ public class GameService {
             waitingForSecondPlacementAfterDouble = true;
 
             return new PlaceResult(project, row, chosenColumn,
-                    "Dubel! Postawiono " + project + " (+ " + gainedPoints + " pkt.). Teraz możesz postawić projekt 5 w dowolnej kolumnie.",
-                    false);
+                    "Dubel! Postawiono " + project + " (+ " + gainedPoints +
+                            " pkt). Teraz możesz postawić FABRYKĘ w dowolnej kolumnie.", false);
+        }
+
+        if (isSame(rollToProject(lastD1), rollToProject(lastD2))) {
+            boolean wasPlacedBefore = placed;
+
+            if (!wasPlacedBefore) {
+                project = rollToProject(isFirstCol ? lastD2 : lastD1);
+                board.set(row, chosenColumn, project);
+                gainedPoints = board.getPoints(row, chosenColumn);
+                roundPoints += gainedPoints;
+
+                if (isFirstCol) firstColumnUsed = true;
+                if (isSecondCol) secondColumnUsed = true;
+
+                placed = true;
+
+                return new PlaceResult(
+                        project,
+                        row,
+                        chosenColumn,
+                        "Specjalny ruch (pierwszy): " + project + " w kolumnie " + (chosenColumn + 1) + " (+ " + gainedPoints + " pkt).",
+                        false
+                );
+            } else {
+                project = Project.FABRYKA;
+                board.set(row, chosenColumn, project);
+                gainedPoints = board.getPoints(row, chosenColumn);
+                roundPoints += gainedPoints;
+
+                if (isFirstCol) firstColumnUsed = true;
+                if (isSecondCol) secondColumnUsed = true;
+
+                totalPoints += roundPoints;
+                roundCount++;
+                uiPoints.setRoundScore(roundCount, roundPoints);
+
+                String msg = "Specjalny ruch (drugi): " + project + " w kolumnie " + (chosenColumn + 1)
+                        + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: " + totalPoints + " pkt. (Runda "
+                        + roundCount + "/" + MAX_ROUNDS + ")";
+
+                resetRound();
+
+                return new PlaceResult(project, row, chosenColumn, msg, true);
+            }
         }
 
         if (isFirstCol && !firstColumnUsed) {
@@ -121,23 +161,30 @@ public class GameService {
 
         boolean roundEnded = firstColumnUsed && secondColumnUsed;
 
-        String message = (isFirstCol ? "Pierwszy" : "Drugi") +
-                " ruch: " + project + " w kolumnie " + (chosenColumn + 1) +
-                " (+ " + gainedPoints + " pkt.)";
-
         if (roundEnded) {
             totalPoints += roundPoints;
             roundCount++;
             uiPoints.setRoundScore(roundCount, roundPoints);
-            message += " Runda zakończona! Łącznie: " + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + ")";
             resetRound();
         }
 
-        return new PlaceResult(project, row, chosenColumn, message, roundEnded);
+        return new PlaceResult(
+                project,
+                row,
+                chosenColumn,
+                "Ruch: " + project + " w kolumnie " + (chosenColumn + 1)
+                        + " (+ " + gainedPoints + " pkt.)",
+                roundEnded
+        );
     }
+
 
     public boolean isDouble(int d1, int d2) {
         return d1 == d2;
+    }
+
+    public boolean isSame(Project first, Project second) {
+        return first == second;
     }
 
     public boolean shouldHighlightAllColumns() {
@@ -153,8 +200,6 @@ public class GameService {
             case 1, 4 -> Project.DOM;
             case 2, 5 -> Project.LAS;
             case 3,6 -> Project.JEZIORO;
-//            case 5 -> Project.FABRYKA;
-//            case 7 -> Project.PLAC;
             default -> throw new IllegalArgumentException("Nieprawidłowy wynik: " + roll);
         };
     }
@@ -168,6 +213,7 @@ public class GameService {
         roundActive = false;
         highlightAllColumns = false;
         waitingForSecondPlacementAfterDouble = false;
+        placed = false;
     }
 
     public boolean isGameOver() {
