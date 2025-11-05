@@ -56,6 +56,28 @@ public class GameService {
 
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
 
+    public GameService.PlaceResult place(int row, int col, Project chosenProject) {
+        if (!setupPhase) {
+            throw new IllegalStateException("Wybór projektu jest możliwy tylko w fazie początkowej!");
+        }
+
+        board.set(row, col, chosenProject);
+        int gainedPoints = board.getPoints(row, col);
+        totalPoints += gainedPoints;
+        setupBuildingsPlaced++;
+
+        String msg = "Faza początkowa: postawiono " + chosenProject + " w kolumnie " + (col + 1)
+                + " (+ " + gainedPoints + " pkt).";
+
+        if (setupBuildingsPlaced >= 2) {
+            setupPhase = false;
+            highlightAllColumns = false;
+            msg += " Faza początkowa zakończona — możesz rozpocząć pierwszą rundę (rzuć kostkami).";
+        }
+
+        return new PlaceResult(chosenProject, row, col, msg, false);
+    }
+
     public PlaceResult place(int row, int chosenColumn) {
         if (setupPhase) {
             Project project = Project.DOM;
@@ -261,5 +283,14 @@ public class GameService {
         setupBuildingsPlaced = 0;
         highlightAllColumns = true;
         resetRound();
+    }
+
+    public void endInitialPhase() {
+        setupPhase = false;
+        highlightAllColumns = false;
+    }
+
+    public boolean isSetupPhase() {
+        return setupPhase;
     }
 }

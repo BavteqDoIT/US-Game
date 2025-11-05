@@ -4,10 +4,13 @@ import com.psam.game.GameService;
 import com.psam.game.Project;
 import com.psam.ui.screens.EndScreen;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,6 +21,8 @@ public class UIGrid extends FlexLayout {
     private final Div[][] cells = new Div[rows][cols];
     private final GameService game;
     private final Set<Integer> activeColumns = new HashSet<>();
+    private boolean waitingForSecondPlacement = false;
+    private int initialPlacements = 0;
 
     public UIGrid(GameService game) {
         this.game = game;
@@ -49,24 +54,35 @@ public class UIGrid extends FlexLayout {
                 }
 
                 final int lambdaRow = row;
-                cell.addClickListener(e -> handleCellClick(lambdaRow, cell));
+                final int lambdaCol = col;
+                cell.addClickListener(e -> handleCellClick(lambdaRow, lambdaCol, cell));
                 add(cell);
                 cells[row][col] = cell;
             }
         }
 
-        if(game.shouldHighlightAllColumns()) {
+        if (game.shouldHighlightAllColumns()) {
             highlightAll();
+            Notification.show("Faza początkowa — wybierz 2 dowolne miejsca na budynki.");
+        } else {
+            Notification.show("Najpierw rzuć kostkami!");
         }
-        Notification.show("Najpierw faza początkowa, musisz postawić 2 dowolne budynki");
     }
 
-    private boolean waitingForSecondPlacement = false;
-
-    private void handleCellClick(int row, Div cell) {
+    private void handleCellClick(int row, int col, Div cell) {
         try {
             if (game.getRoundCount() >= 9) {
                 UI.getCurrent().navigate(EndScreen.class);
+                return;
+            }
+
+            if (game.isSetupPhase()){
+                if (cell.getComponentCount() > 1) {
+                    Notification.show("To pole jest już zajęte!");
+                    return;
+                }
+
+                showProjectSelectionDialog(row, col);
                 return;
             }
 
@@ -75,8 +91,7 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            int clickedCol = getColumnIndex(cell);
-            if (!activeColumns.contains(clickedCol)) {
+            if (!activeColumns.contains(col)) {
                 Notification.show("Wybierz pole w jednej z podświetlonych kolumn!");
                 return;
             }
@@ -86,7 +101,7 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            var result = game.place(row, clickedCol);
+            var result = game.place(row, col);
             addEmoji(result.row(), result.col(), result.project());
             Notification.show(result.message());
 
@@ -106,7 +121,7 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            deactivateColumn(clickedCol);
+            deactivateColumn(col);
 
             if (result.roundEnded()) {
                 clearHighlights();
@@ -118,6 +133,36 @@ public class UIGrid extends FlexLayout {
 
         } catch (Exception ex) {
             Notification.show(ex.getMessage());
+        }
+    }
+
+    private void showProjectSelectionDialog(int row, int col) {
+        Dialog dialog = new Dialog();
+        dialog.setHeaderTitle("Wybierz projekt:");
+
+        Button domBtn = new Button("\uD83C\uDFE0 Dom", e -> selectProject(dialog, row, col, Project.DOM));
+        Button lasBtn = new Button("\uD83C\uDF33 Las", e -> selectProject(dialog, row, col, Project.LAS));
+        Button fabrykaBtn = new Button("\uD83C\uDF0A Jezioro", e -> selectProject(dialog, row, col, Project.FABRYKA));
+
+        FlexLayout layout = new FlexLayout(domBtn, lasBtn, fabrykaBtn);
+        layout.getStyle().set("gap", "10px");
+        layout.getStyle().set("justify-content", "center");
+
+        dialog.add(layout);
+        dialog.open();
+    }
+
+    private void selectProject(Dialog dialog, int row, int col, Project project) {
+        dialog.close();
+        var result = game.place(row, col, project);
+        addEmoji(result.row(), result.col(), project);
+        Notification.show("Postawiono: " + project.name());
+        initialPlacements++;
+
+        if (initialPlacements >= 2) {
+            clearHighlights();
+            Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
+            game.endInitialPhase();
         }
     }
 
@@ -143,14 +188,12 @@ public class UIGrid extends FlexLayout {
         if (!isDouble) {
             int col1 = game.d1() - 1;
             int col2 = game.d2() - 1;
-
             highlightColumn(col1);
             highlightColumn(col2);
         } else {
             int col1 = game.d1() - 1;
             highlightColumn(col1);
         }
-
     }
 
     private void highlightColumn(int col) {
@@ -161,7 +204,7 @@ public class UIGrid extends FlexLayout {
         }
     }
 
-    public void highlightAll(){
+    public void highlightAll() {
         for (int col = 0; col < cols; col++) {
             highlightColumn(col);
         }
@@ -185,14 +228,4 @@ public class UIGrid extends FlexLayout {
         }
     }
 
-    private int getColumnIndex(Div cell) {
-        for (int row = 0; row < rows; row++) {
-            for (int col = 0; col < cols; col++) {
-                if (cells[row][col] == cell) {
-                    return col;
-                }
-            }
-        }
-        return -1;
-    }
 }
