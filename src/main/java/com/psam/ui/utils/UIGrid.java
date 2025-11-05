@@ -22,10 +22,11 @@ public class UIGrid extends FlexLayout {
     private final GameService game;
     private final Set<Integer> activeColumns = new HashSet<>();
     private boolean waitingForSecondPlacement = false;
-    private int initialPlacements = 0;
+    private int initialPlacements;
 
     public UIGrid(GameService game) {
         this.game = game;
+        initialPlacements = 0;
 
         getStyle().set("display", "grid");
         getStyle().set("grid-template-columns", "repeat(" + cols + ", 56px)");
@@ -225,6 +226,15 @@ public class UIGrid extends FlexLayout {
                 cells[row][col].removeClassName("highlighted");
                 cells[row][col].addClassName("noHighlight");
             }
+        }
+    }
+
+    public void refreshHighlights() {
+        clearHighlights();
+        if (game.isSetupPhase()) {
+            highlightAll(); // jeśli początkowa faza
+        } else if (game.isRoundActive()) {
+            highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
         }
     }
 

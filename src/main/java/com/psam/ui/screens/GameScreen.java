@@ -25,6 +25,7 @@ public class GameScreen extends VerticalLayout {
         setSizeFull();
 
         UIGrid grid = new UIGrid(game);
+        grid.refreshHighlights();
         UIPoints points = new UIPoints();
         game.setUIPoints(points);
 

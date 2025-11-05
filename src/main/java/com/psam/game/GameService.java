@@ -1,5 +1,6 @@
 package com.psam.game;
 
+import com.psam.ui.screens.GameScreen;
 import com.psam.ui.utils.UIPoints;
 import org.springframework.stereotype.Service;
 import java.util.Random;
