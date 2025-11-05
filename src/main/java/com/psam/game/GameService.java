@@ -80,25 +80,6 @@ public class GameService {
     }
 
     public PlaceResult place(int row, int chosenColumn) {
-        if (setupPhase) {
-            Project project = Project.DOM;
-            board.set(row, chosenColumn, project);
-            int gainedPoints = board.getPoints(row, chosenColumn);
-            totalPoints += gainedPoints;
-            setupBuildingsPlaced++;
-
-            String msg = "Faza początkowa: postawiono " + project + " w kolumnie " + (chosenColumn + 1)
-                    + " (+ " + gainedPoints + " pkt).";
-
-            if (setupBuildingsPlaced >= 2) {
-                setupPhase = false;
-                highlightAllColumns = false;
-                msg += " Faza początkowa zakończona — możesz rozpocząć pierwszą rundę (rzuć kostkami).";
-            }
-
-            return new PlaceResult(project, row, chosenColumn, msg, false);
-        }
-
         if (!roundActive)
             throw new IllegalStateException("Najpierw rozpocznij rundę!");
 
