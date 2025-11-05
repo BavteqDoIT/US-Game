@@ -24,7 +24,10 @@ public class GameService {
     private int roundPoints = 0;
     private UIPoints uiPoints;
 
-    private boolean highlightAllColumns = false;
+    private boolean setupPhase = true;
+    private int setupBuildingsPlaced = 0;
+
+    private boolean highlightAllColumns = true;
     private boolean waitingForSecondPlacementAfterDouble = false;
     private boolean activeBonus = false;
 
@@ -38,6 +41,8 @@ public class GameService {
     public int getTotalPoints() { return totalPoints; }
 
     public void startRound() {
+        if (setupPhase)
+            throw new IllegalStateException("Najpierw zakończ fazę początkową (postaw 2 budynki).");
         if (roundActive)
             throw new IllegalStateException("Runda już trwa!");
         if (isGameOver())
@@ -52,6 +57,25 @@ public class GameService {
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
 
     public PlaceResult place(int row, int chosenColumn) {
+        if (setupPhase) {
+            Project project = Project.DOM;
+            board.set(row, chosenColumn, project);
+            int gainedPoints = board.getPoints(row, chosenColumn);
+            totalPoints += gainedPoints;
+            setupBuildingsPlaced++;
+
+            String msg = "Faza początkowa: postawiono " + project + " w kolumnie " + (chosenColumn + 1)
+                    + " (+ " + gainedPoints + " pkt).";
+
+            if (setupBuildingsPlaced >= 2) {
+                setupPhase = false;
+                highlightAllColumns = false;
+                msg += " Faza początkowa zakończona — możesz rozpocząć pierwszą rundę (rzuć kostkami).";
+            }
+
+            return new PlaceResult(project, row, chosenColumn, msg, false);
+        }
+
         if (!roundActive)
             throw new IllegalStateException("Najpierw rozpocznij rundę!");
 
@@ -187,7 +211,6 @@ public class GameService {
         return new PlaceResult(project, row, col, msg, isOver);
     }
 
-
     public boolean isBonusRound() {
         return roundCount % 3 == 2;
     }
@@ -234,6 +257,9 @@ public class GameService {
         board.clear();
         roundCount = 0;
         totalPoints = 0;
+        setupPhase = true;
+        setupBuildingsPlaced = 0;
+        highlightAllColumns = true;
         resetRound();
     }
 }

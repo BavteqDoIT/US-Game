@@ -54,6 +54,11 @@ public class UIGrid extends FlexLayout {
                 cells[row][col] = cell;
             }
         }
+
+        if(game.shouldHighlightAllColumns()) {
+            highlightAll();
+        }
+        Notification.show("Najpierw faza początkowa, musisz postawić 2 dowolne budynki");
     }
 
     private boolean waitingForSecondPlacement = false;
@@ -65,7 +70,7 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            if (!game.isRoundActive()) {
+            if (!game.isRoundActive() && game.getRoundCount() != 0) {
                 Notification.show("Najpierw rzuć kostkami!");
                 return;
             }
