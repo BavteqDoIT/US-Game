@@ -76,7 +76,7 @@ public class GameService {
             board.set(row, col, chosenProject);
             int gainedPoints = board.getPoints(row, col);
             roundPoints += gainedPoints;
-            totalPoints += gainedPoints;
+            totalPoints += roundPoints;
             String msg = "Faza bonusowa: postawiono " + chosenProject + " w kolumnie " + (col + 1)
                     + " (+ " + gainedPoints + " pkt).";
             roundCount++;
