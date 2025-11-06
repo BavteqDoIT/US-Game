@@ -3,6 +3,9 @@ package com.psam.game;
 import com.psam.ui.screens.GameScreen;
 import com.psam.ui.utils.UIPoints;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 @Service
@@ -94,6 +97,19 @@ public class GameService {
 
         int targetColumn1 = lastD1 - 1;
         int targetColumn2 = lastD2 - 1;
+        if (!hasFreeSpaceInColumn(targetColumn1)) {
+            List<Integer> freer = findFreerColumnsRecursive(targetColumn1, 1);
+            if (!freer.isEmpty()) {
+                targetColumn1 = freer.get(0);
+            }
+        }
+
+        if (!hasFreeSpaceInColumn(targetColumn2)) {
+            List<Integer> freer = findFreerColumnsRecursive(targetColumn2, 1);
+            if (!freer.isEmpty()) {
+                targetColumn2 = freer.get(0);
+            }
+        }
 
         boolean isFirstCol = chosenColumn == targetColumn1;
         boolean isSecondCol = chosenColumn == targetColumn2;
@@ -258,5 +274,62 @@ public class GameService {
 
     public boolean isSetupPhase() {
         return setupPhase;
+    }
+
+    public boolean hasFreeSpaceInColumn(int col) {
+        for (int row = 0; row < board.getSize() - 1; row++) {
+            if (board.get(row, col) == null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public List<Integer> findFreerColumnsRecursive(int col, int step) {
+        int size = board.getSize();
+        List<Integer> result = new ArrayList<>();
+
+        int lowerCol = col - step;
+        int upperCol = col + step;
+
+        int freeLower = 0;
+        int freeUpper = 0;
+
+        if (lowerCol >= 0) {
+            for (int row = 0; row < size; row++) {
+                if (board.get(row, lowerCol) == null) {
+                    freeLower++;
+                }
+            }
+        }
+
+        if (upperCol < size) {
+            for (int row = 0; row < size; row++) {
+                if (board.get(row, upperCol) == null) {
+                    freeUpper++;
+                }
+            }
+        }
+
+        if (freeLower > 0 || freeUpper > 0) {
+            if (freeLower > freeUpper) {
+                result.add(lowerCol);
+            } else if (freeUpper > freeLower) {
+                result.add(upperCol);
+            } else if (freeLower == freeUpper && freeLower > 0) {
+                if (lowerCol >= 0) result.add(lowerCol);
+                if (upperCol < size) result.add(upperCol);
+            }
+            return result;
+        }
+
+        boolean canGoLeft = lowerCol >= 0;
+        boolean canGoRight = upperCol < size;
+
+        if (!canGoLeft && !canGoRight) {
+            return result;
+        }
+
+        return findFreerColumnsRecursive(col, step + 1);
     }
 }

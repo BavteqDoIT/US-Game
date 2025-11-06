@@ -12,6 +12,7 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class UIGrid extends FlexLayout {
@@ -240,14 +241,44 @@ public class UIGrid extends FlexLayout {
     public void highlightRoundColumns(boolean isDouble) {
         clearHighlights();
         activeColumns.clear();
+
         if (!isDouble) {
             int col1 = game.d1() - 1;
             int col2 = game.d2() - 1;
-            highlightColumn(col1);
-            highlightColumn(col2);
+
+            System.out.println("Kolumna 1: " + col1);
+            System.out.println("Kolumna 2: " + col2);
+
+            if (game.hasFreeSpaceInColumn(col1)) {
+                highlightColumn(col1);
+            } else {
+                List<Integer> freer = game.findFreerColumnsRecursive(col1, 1);
+                for (int freeCol : freer) {
+                    highlightColumn(freeCol);
+                }
+            }
+
+            if (game.hasFreeSpaceInColumn(col2)) {
+                highlightColumn(col2);
+            } else {
+                List<Integer> freer = game.findFreerColumnsRecursive(col2, 1);
+                for (int freeCol : freer) {
+                    highlightColumn(freeCol);
+                }
+            }
+
         } else {
-            int col1 = game.d1() - 1;
-            highlightColumn(col1);
+            int col = game.d1() - 1;
+            System.out.println("Kolumna dublowa: " + col);
+
+            if (game.hasFreeSpaceInColumn(col)) {
+                highlightColumn(col);
+            } else {
+                List<Integer> freer = game.findFreerColumnsRecursive(col, 1);
+                for (int freeCol : freer) {
+                    highlightColumn(freeCol);
+                }
+            }
         }
     }
 

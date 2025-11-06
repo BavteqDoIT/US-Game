@@ -7,10 +7,10 @@ import java.util.List;
 public class Board {
     private final int size = 6;
     private final Project[][] grid = new Project[size][size];
-    private final int[][] points = new int[size][size]; // punkty na planszy
+    private final int[][] points = new int[size][size];
 
     public Board() {
-        generatePoints(); // losowe rozmieszczenie punktów
+        generatePoints();
     }
 
     public void set(int row, int col, Project project) {
@@ -57,15 +57,6 @@ public class Board {
         }
     }
 
-    public void printPointsLayout() {
-        System.out.println("=== ROZKŁAD PUNKTÓW NA PLANSZY (dla UIGrid) ===");
-        for (int r = 0; r < size; r++) {
-            for (int c = 0; c < size; c++) {
-                System.out.print(points[r][c] + " ");
-            }
-            System.out.println();
-        }
-    }
 
     public void clear() {
         for (int r = 0; r < size; r++) {
