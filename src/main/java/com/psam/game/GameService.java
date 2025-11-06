@@ -30,7 +30,7 @@ public class GameService {
 
     private boolean highlightAllColumns = true;
     private boolean waitingForSecondPlacementAfterDouble = false;
-    private boolean activeBonus = false;
+    public boolean activeBonus = false;
 
     public void setUIPoints(UIPoints uiPoints) { this.uiPoints = uiPoints; }
     public Board board() { return board; }
@@ -40,6 +40,7 @@ public class GameService {
     public boolean isRoundActive() { return roundActive; }
     public boolean shouldHighlightAllColumns() { return highlightAllColumns; }
     public int getTotalPoints() { return totalPoints; }
+    public boolean getWaitingForSecondPlacementAfterDouble() { return waitingForSecondPlacementAfterDouble; }
 
     public void startRound() {
         if (setupPhase)
@@ -49,34 +50,42 @@ public class GameService {
         if (isGameOver())
             throw new IllegalStateException("Gra już się zakończyła!");
 
-        lastD1 = rng.nextInt(6) + 1;
-        lastD2 = rng.nextInt(6) + 1;
+        lastD1 = 1 + rng.nextInt(6);
+        lastD2 = 1 + rng.nextInt(6);
         resetRoundFlags();
         roundActive = true;
     }
 
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
 
-    public GameService.PlaceResult place(int row, int col, Project chosenProject) {
-        if (!setupPhase) {
-            throw new IllegalStateException("Wybór projektu jest możliwy tylko w fazie początkowej!");
+    public PlaceResult place(int row, int col, Project chosenProject) {
+        if(setupPhase) {
+            board.set(row, col, chosenProject);
+            setupBuildingsPlaced++;
+
+            String msg = "Faza początkowa: postawiono " + chosenProject + " w kolumnie " + (col + 1);
+
+            if (setupBuildingsPlaced >= 2) {
+                setupPhase = false;
+                highlightAllColumns = false;
+                msg += " Faza początkowa zakończona — możesz rozpocząć pierwszą rundę (rzuć kostkami).";
+            }
+
+            return new PlaceResult(chosenProject, row, col, msg, false);
+        } else if (!setupPhase) {
+            board.set(row, col, chosenProject);
+            int gainedPoints = board.getPoints(row, col);
+            roundPoints += gainedPoints;
+            totalPoints += gainedPoints;
+            String msg = "Faza bonusowa: postawiono " + chosenProject + " w kolumnie " + (col + 1)
+                    + " (+ " + gainedPoints + " pkt).";
+            roundCount++;
+            uiPoints.setRoundScore(roundCount, roundPoints);
+            resetRound();
+            return new PlaceResult(chosenProject, row, col, msg, true);
+        } else {
+            return null;
         }
-
-        board.set(row, col, chosenProject);
-        int gainedPoints = board.getPoints(row, col);
-        totalPoints += gainedPoints;
-        setupBuildingsPlaced++;
-
-        String msg = "Faza początkowa: postawiono " + chosenProject + " w kolumnie " + (col + 1)
-                + " (+ " + gainedPoints + " pkt).";
-
-        if (setupBuildingsPlaced >= 2) {
-            setupPhase = false;
-            highlightAllColumns = false;
-            msg += " Faza początkowa zakończona — możesz rozpocząć pierwszą rundę (rzuć kostkami).";
-        }
-
-        return new PlaceResult(chosenProject, row, col, msg, false);
     }
 
     public PlaceResult place(int row, int chosenColumn) {
@@ -91,26 +100,6 @@ public class GameService {
 
         Project project;
         int gainedPoints;
-
-        if (activeBonus && !waitingForSecondPlacementAfterDouble) {
-            project = Project.DOM;
-            board.set(row, chosenColumn, project);
-
-            gainedPoints = board.getPoints(row, chosenColumn);
-            roundPoints += gainedPoints;
-
-            String origin = getRoundOriginText();
-            totalPoints += roundPoints;
-            roundCount++;
-            uiPoints.setRoundScore(roundCount, roundPoints);
-
-            String msg = "BONUS! Postawiono DOM w kolumnie " + (chosenColumn + 1)
-                    + " (+ " + gainedPoints + " pkt). Runda zakończona! Łącznie: "
-                    + totalPoints + " pkt. (Runda " + roundCount + "/" + MAX_ROUNDS + " / " + origin + ")";
-
-            resetRound();
-            return new PlaceResult(project, row, chosenColumn, msg, true);
-        }
 
         if (waitingForSecondPlacementAfterDouble) {
             project = Project.PLAC;
@@ -188,12 +177,6 @@ public class GameService {
         return true;
     }
 
-    private String getRoundOriginText() {
-        if (isDouble(lastD1, lastD2)) return "Dubel";
-        if (isSame(rollToProject(lastD1), rollToProject(lastD2))) return "Ten sam projekt";
-        return "Zwykła runda";
-    }
-
     private PlaceResult handleProjectPlacement(Project project, int row, int col,
                                                boolean isFirstCol, boolean isSecondCol, boolean secondMove) {
         board.set(row, col, project);
@@ -236,7 +219,8 @@ public class GameService {
         };
     }
 
-    private void resetRound() {
+    public void resetRound() {
+        System.out.println("total points: " + totalPoints + ", round points: " + roundPoints);
         lastD1 = 0;
         lastD2 = 0;
         resetRoundFlags();

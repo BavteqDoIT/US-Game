@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class UIGrid extends FlexLayout {
+    private final Set<Project> availableBonusProjects = new HashSet<>();
 
     private final int rows = 5;
     private final int cols = 6;
@@ -27,6 +28,7 @@ public class UIGrid extends FlexLayout {
     public UIGrid(GameService game) {
         this.game = game;
         initialPlacements = 0;
+
 
         getStyle().set("display", "grid");
         getStyle().set("grid-template-columns", "repeat(" + cols + ", 56px)");
@@ -68,6 +70,9 @@ public class UIGrid extends FlexLayout {
         } else {
             Notification.show("Najpierw rzuć kostkami!");
         }
+        availableBonusProjects.add(Project.JEZIORO);
+        availableBonusProjects.add(Project.LAS);
+        availableBonusProjects.add(Project.DOM);
     }
 
     private void handleCellClick(int row, int col, Div cell) {
@@ -99,6 +104,12 @@ public class UIGrid extends FlexLayout {
 
             if (cell.getComponentCount() > 1) {
                 Notification.show("To pole jest już zajęte!");
+                return;
+            }
+
+            if (game.isBonusRound() && game.activeBonus && !game.getWaitingForSecondPlacementAfterDouble()){
+                showProjectSelectionDialog(row, col);
+                waitingForSecondPlacement = false;
                 return;
             }
 
@@ -141,17 +152,57 @@ public class UIGrid extends FlexLayout {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle("Wybierz projekt:");
 
-        Button domBtn = new Button("\uD83C\uDFE0 Dom", e -> selectProject(dialog, row, col, Project.DOM));
-        Button lasBtn = new Button("\uD83C\uDF33 Las", e -> selectProject(dialog, row, col, Project.LAS));
-        Button fabrykaBtn = new Button("\uD83C\uDF0A Jezioro", e -> selectProject(dialog, row, col, Project.FABRYKA));
-
-        FlexLayout layout = new FlexLayout(domBtn, lasBtn, fabrykaBtn);
+        FlexLayout layout = new FlexLayout();
         layout.getStyle().set("gap", "10px");
         layout.getStyle().set("justify-content", "center");
+
+        if (game.isBonusRound() && game.activeBonus) {
+            if (availableBonusProjects.isEmpty()) {
+                Notification.show("Brak dostępnych projektów bonusowych!");
+                dialog.close();
+                return;
+            }
+
+            for (Project project : availableBonusProjects) {
+                Button btn = new Button(getEmoji(project) + " " + project.name(), e -> {
+                    selectBonusProject(dialog, row, col, project);
+                });
+                layout.add(btn);
+            }
+
+        } else {
+            Button domBtn = new Button("\uD83C\uDFE0 Dom", e -> selectProject(dialog, row, col, Project.DOM));
+            Button lasBtn = new Button("\uD83C\uDF33 Las", e -> selectProject(dialog, row, col, Project.LAS));
+            Button jezioroBtn = new Button("\uD83C\uDF0A Jezioro", e -> selectProject(dialog, row, col, Project.JEZIORO));
+
+            layout.add(domBtn, lasBtn, jezioroBtn);
+        }
 
         dialog.add(layout);
         dialog.open();
     }
+
+    private void selectBonusProject(Dialog dialog, int row, int col, Project project) {
+        dialog.close();
+
+        availableBonusProjects.remove(project);
+
+        var result = game.place(row, col, project);
+        addEmoji(result.row(), result.col(), project);
+
+        game.activeBonus = false;
+        game.resetRound();
+        clearHighlights();
+
+        Notification.show("Runda bonusowa — postawiono: " + project.name()
+                + ". Projekt nie będzie już dostępny w kolejnych rundach.");
+
+        if (game.getRoundCount() >= 9) {
+            UI.getCurrent().navigate(EndScreen.class);
+        }
+    }
+
+
 
     private void selectProject(Dialog dialog, int row, int col, Project project) {
         dialog.close();
@@ -164,6 +215,9 @@ public class UIGrid extends FlexLayout {
             clearHighlights();
             Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
             game.endInitialPhase();
+        }
+        if(game.getRoundCount()>=9){
+            UI.getCurrent().navigate(EndScreen.class);
         }
     }
 
@@ -232,7 +286,7 @@ public class UIGrid extends FlexLayout {
     public void refreshHighlights() {
         clearHighlights();
         if (game.isSetupPhase()) {
-            highlightAll(); // jeśli początkowa faza
+            highlightAll();
         } else if (game.isRoundActive()) {
             highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
         }
