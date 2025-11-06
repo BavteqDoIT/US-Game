@@ -78,17 +78,17 @@ public class UIGrid extends FlexLayout {
 
     private void handleCellClick(int row, int col, Div cell) {
         try {
+            if(game.board().get(row, col) != null) {
+                Notification.show("To pole jest już zajęte");
+                return;
+            }
             if (game.getRoundCount() >= 9) {
                 UI.getCurrent().navigate(EndScreen.class);
                 return;
             }
 
             if (game.isSetupPhase()){
-                if (cell.getComponentCount() > 1) {
-                    Notification.show("To pole jest już zajęte!");
-                    return;
-                }
-
+                Notification.show("To pole jest już zajęte!");
                 showProjectSelectionDialog(row, col);
                 return;
             }

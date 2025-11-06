@@ -62,6 +62,9 @@ public class GameService {
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
 
     public PlaceResult place(int row, int col, Project chosenProject) {
+        if (board.get(row, col) != null) {
+            throw new IllegalStateException("To pole jest już zajęte! Wybierz inne miejsce.");
+        }
         if(setupPhase) {
             board.set(row, col, chosenProject);
             setupBuildingsPlaced++;
