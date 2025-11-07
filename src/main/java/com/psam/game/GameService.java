@@ -189,9 +189,16 @@ public class GameService {
             activeBonus = true;
             return false;
         }
-        totalPoints += roundPoints;
+
+        int diceSum = lastD1 + lastD2;
+        int gainedPoints = calculateRoundPoints(diceSum);
+        System.out.println("Obliczone punkty: " + gainedPoints);
+        roundPoints += gainedPoints;
+        totalPoints += gainedPoints;
+
         roundCount++;
         uiPoints.setRoundScore(roundCount, roundPoints);
+
         resetRound();
         return true;
     }
@@ -334,5 +341,124 @@ public class GameService {
         }
 
         return findFreerColumnsRecursive(col, step + 1);
+    }
+    public int calculateRoundPoints(int diceSum) {
+        int targetRow;
+        if (diceSum == 3 || diceSum == 4) targetRow = 0;
+        else if (diceSum == 5 || diceSum == 6) targetRow = 1;
+        else if (diceSum == 7) targetRow = 2;
+        else if (diceSum == 8 || diceSum == 9) targetRow = 3;
+        else if (diceSum == 10 || diceSum == 11) targetRow = 4;
+        else throw new IllegalArgumentException("Nieprawidłowa suma oczek: " + diceSum);
+
+        int cols = board.getSize();
+        int rows = 5;
+        boolean[][] visited = new boolean[rows][cols];
+        int totalPoints = 0;
+
+        System.out.println("=== LICZENIE PUNKTÓW DLA RZĘDU " + targetRow + " (suma oczek: " + diceSum + ") ===");
+
+        for (int col = 0; col < cols; col++) {
+            Project project = board.get(targetRow, col);
+            System.out.println("Sprawdzam pole [r=" + targetRow + ", c=" + col + "] -> " + project);
+
+            if (project == null) continue;
+
+            if (project == Project.PLAC || project == Project.FABRYKA) {
+                System.out.println("Pomijam (PLAC/FABRYKA).");
+                continue;
+            }
+
+            if (visited[targetRow][col]) {
+                System.out.println("Pomijam (już odwiedzone).");
+                continue;
+            }
+
+            int[] start = findTopLeftStart(targetRow, col, project, new boolean[rows][cols]);
+            System.out.println("Znaleziono top-left start grupy " + project + " na [" + start[0] + "," + start[1] + "]");
+
+            boolean[][] groupVisited = new boolean[rows][cols];
+            int points = sumPointsByColumns(start[0], start[1], project, groupVisited);
+            System.out.println("Grupa " + project + " = " + points + " pkt");
+            for (int r = 0; r < rows; r++) {
+                for (int c = 0; c < cols; c++) {
+                    if (groupVisited[r][c]) visited[r][c] = true;
+                }
+            }
+
+            totalPoints += points;
+        }
+
+        System.out.println("=== ŁĄCZNA LICZBA PUNKTÓW W RUNDZIE: " + totalPoints + " ===");
+        return totalPoints;
+    }
+
+    private int[] findTopLeftStart(int row, int col, Project project, boolean[][] visited) {
+        int cols = board.getSize();
+        int rows = 5;
+        if (row < 0 || row >= rows || col < 0 || col >= cols) return new int[]{row, col};
+        if (visited[row][col]) return new int[]{row, col};
+
+        Project current = board.get(row, col);
+        if (current != project || current == Project.FABRYKA || current == Project.PLAC)
+            return new int[]{row, col};
+
+        visited[row][col] = true;
+        int bestRow = row;
+        int bestCol = col;
+
+        if (col > 0 && board.get(row, col - 1) == project) {
+            int[] left = findTopLeftStart(row, col - 1, project, visited);
+            if (left[1] < bestCol || (left[1] == bestCol && left[0] < bestRow)) {
+                bestRow = left[0];
+                bestCol = left[1];
+            }
+        }
+
+        if (row > 0 && board.get(row - 1, col) == project) {
+            int[] up = findTopLeftStart(row - 1, col, project, visited);
+            if (up[0] < bestRow || (up[0] == bestRow && up[1] < bestCol)) {
+                bestRow = up[0];
+                bestCol = up[1];
+            }
+        }
+
+        return new int[]{bestRow, bestCol};
+    }
+
+    private int sumPointsByColumns(int startRow, int startCol, Project project, boolean[][] visited) {
+        int cols = board.getSize();
+        int rows = 5;
+        int totalPoints = 0;
+
+        System.out.println("→ Start zliczania kolumnowo od [" + startRow + "," + startCol + "] dla " + project);
+
+        List<int[]> stack = new ArrayList<>();
+        stack.add(new int[]{startRow, startCol});
+
+        while (!stack.isEmpty()) {
+            int[] pos = stack.remove(stack.size() - 1);
+            int r = pos[0];
+            int c = pos[1];
+
+            if (r < 0 || r >= rows || c < 0 || c >= cols) continue;
+            if (visited[r][c]) continue;
+
+            Project current = board.get(r, c);
+            if (current != project || current == Project.FABRYKA || current == Project.PLAC) continue;
+
+            visited[r][c] = true;
+            int pts = board.getPoints(r, c);
+            totalPoints += pts;
+            System.out.println("  • Liczę pole [" + r + "," + c + "] = " + project + " (+ " + pts + " pkt)");
+
+            stack.add(new int[]{r - 1, c});
+            stack.add(new int[]{r + 1, c});
+            stack.add(new int[]{r, c - 1});
+            stack.add(new int[]{r, c + 1});
+        }
+
+        System.out.println("→ Grupa " + project + " = " + totalPoints + " pkt");
+        return totalPoints;
     }
 }
