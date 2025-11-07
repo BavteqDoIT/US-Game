@@ -80,7 +80,8 @@ public class GameService {
             return new PlaceResult(chosenProject, row, col, msg, false);
         } else if (!setupPhase) {
             board.set(row, col, chosenProject);
-            int gainedPoints = board.getPoints(row, col);
+            int diceSum = lastD1 + lastD2;
+            int gainedPoints = calculateRoundPoints(diceSum);
             roundPoints += gainedPoints;
             totalPoints += roundPoints;
             String msg = "Faza bonusowa: postawiono " + chosenProject + " w kolumnie " + (col + 1)
@@ -124,14 +125,12 @@ public class GameService {
             project = Project.PLAC;
             board.set(row, chosenColumn, project);
 
-            gainedPoints = board.getPoints(row, chosenColumn);
-            roundPoints += gainedPoints;
             waitingForSecondPlacementAfterDouble = false;
 
             boolean isOver = handleRoundEndIfNeeded();
 
             String msg = "Drugi ruch po dublecie: postawiono Plac w kolumnie " + (chosenColumn + 1)
-                    + " (+ " + gainedPoints + " pkt)." + (isOver ? " Runda zakończona!" : "");
+                    + (isOver ? " Runda zakończona!" : "");
             return new PlaceResult(project, row, chosenColumn, msg, isOver);
         }
 
@@ -139,14 +138,11 @@ public class GameService {
             project = rollToProject(lastD1);
             board.set(row, targetColumn1, project);
 
-            gainedPoints = board.getPoints(row, targetColumn1);
-            roundPoints += gainedPoints;
-
             highlightAllColumns = true;
             waitingForSecondPlacementAfterDouble = true;
 
-            String msg = "Dubel! Postawiono " + project + " (+ " + gainedPoints +
-                    " pkt). Teraz możesz postawić FABRYKĘ w dowolnej kolumnie.";
+            String msg = "Dubel! Postawiono " + project +
+                    "\n Teraz możesz postawić FABRYKĘ w dowolnej kolumnie.";
             return new PlaceResult(project, row, chosenColumn, msg, false);
         }
 
@@ -172,14 +168,12 @@ public class GameService {
         }
 
         board.set(row, chosenColumn, project);
-        gainedPoints = board.getPoints(row, chosenColumn);
-        roundPoints += gainedPoints;
 
         boolean roundEnded = firstColumnUsed && secondColumnUsed;
         boolean isOver = roundEnded && handleRoundEndIfNeeded();
 
         String msg = "Ruch: " + project + " w kolumnie " + (chosenColumn + 1)
-                + " (+ " + gainedPoints + " pkt.)" + (isOver ? " Runda zakończona!" : "");
+                         + (isOver ? " Runda zakończona!" : "");
         return new PlaceResult(project, row, chosenColumn, msg, isOver);
     }
 
@@ -206,8 +200,6 @@ public class GameService {
     private PlaceResult handleProjectPlacement(Project project, int row, int col,
                                                boolean isFirstCol, boolean isSecondCol, boolean secondMove) {
         board.set(row, col, project);
-        int gainedPoints = board.getPoints(row, col);
-        roundPoints += gainedPoints;
 
         if (isFirstCol) firstColumnUsed = true;
         if (isSecondCol) secondColumnUsed = true;
@@ -219,7 +211,7 @@ public class GameService {
 
         String label = secondMove ? "Specjalny ruch (drugi)" : "Specjalny ruch (pierwszy)";
         String msg = label + ": " + project + " w kolumnie " + (col + 1)
-                + " (+ " + gainedPoints + " pkt.)" + (isOver ? " Runda zakończona!" : "");
+                + (isOver ? " Runda zakończona!" : "");
 
         return new PlaceResult(project, row, col, msg, isOver);
     }
@@ -396,35 +388,53 @@ public class GameService {
     private int[] findTopLeftStart(int row, int col, Project project, boolean[][] visited) {
         int cols = board.getSize();
         int rows = 5;
-        if (row < 0 || row >= rows || col < 0 || col >= cols) return new int[]{row, col};
-        if (visited[row][col]) return new int[]{row, col};
+
+        if (row < 0 || row >= rows || col < 0 || col >= cols) {
+            System.out.println("⛔ [" + row + "," + col + "] poza planszą – zwracam ten punkt.");
+            return new int[]{row, col};
+        }
+
+        if (visited[row][col]) {
+            System.out.println("⚠️ [" + row + "," + col + "] już odwiedzone – pomijam.");
+            return new int[]{row, col};
+        }
 
         Project current = board.get(row, col);
-        if (current != project || current == Project.FABRYKA || current == Project.PLAC)
+        if (current != project || current == Project.FABRYKA || current == Project.PLAC) {
+            System.out.println("❌ [" + row + "," + col + "] to nie " + project + " (znaleziono " + current + ") – przerywam.");
             return new int[]{row, col};
+        }
 
         visited[row][col] = true;
+        System.out.println("✅ Analizuję [" + row + "," + col + "] = " + current);
+
         int bestRow = row;
         int bestCol = col;
 
         if (col > 0 && board.get(row, col - 1) == project) {
+            System.out.println("↩️ Szukam dalej w lewo od [" + row + "," + col + "]");
             int[] left = findTopLeftStart(row, col - 1, project, visited);
             if (left[1] < bestCol || (left[1] == bestCol && left[0] < bestRow)) {
+                System.out.println("🟦 Aktualizuję start: " + bestRow + "," + bestCol + " → " + left[0] + "," + left[1] + " (lewo lepsze)");
                 bestRow = left[0];
                 bestCol = left[1];
             }
         }
 
         if (row > 0 && board.get(row - 1, col) == project) {
+            System.out.println("⬆️ Szukam dalej w górę od [" + row + "," + col + "]");
             int[] up = findTopLeftStart(row - 1, col, project, visited);
             if (up[0] < bestRow || (up[0] == bestRow && up[1] < bestCol)) {
+                System.out.println("🟩 Aktualizuję start: " + bestRow + "," + bestCol + " → " + up[0] + "," + up[1] + " (góra lepsza)");
                 bestRow = up[0];
                 bestCol = up[1];
             }
         }
 
+        System.out.println("🏁 Dla [" + row + "," + col + "] zwracam start: [" + bestRow + "," + bestCol + "]");
         return new int[]{bestRow, bestCol};
     }
+
 
     private int sumPointsByColumns(int startRow, int startCol, Project project, boolean[][] visited) {
         int cols = board.getSize();
