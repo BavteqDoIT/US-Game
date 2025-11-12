@@ -88,7 +88,6 @@ public class UIGrid extends FlexLayout {
             }
 
             if (game.isSetupPhase()){
-                Notification.show("To pole jest już zajęte!");
                 showProjectSelectionDialog(row, col);
                 return;
             }
