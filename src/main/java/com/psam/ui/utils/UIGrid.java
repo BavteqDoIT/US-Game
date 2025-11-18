@@ -127,6 +127,8 @@ public class UIGrid extends FlexLayout {
                 waitingForSecondPlacement = false;
                 clearHighlights();
                 Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
+                askUserForRowIfNeeded(game.d1() + game.d2());
+                System.out.println("PRzeszlo tu");
                 if (game.getRoundCount() >= 9) {
                     UI.getCurrent().navigate(EndScreen.class);
                 }
@@ -138,6 +140,7 @@ public class UIGrid extends FlexLayout {
             if (result.roundEnded()) {
                 clearHighlights();
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
+                askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     UI.getCurrent().navigate(EndScreen.class);
                 }
@@ -191,11 +194,11 @@ public class UIGrid extends FlexLayout {
         addEmoji(result.row(), result.col(), project);
 
         game.activeBonus = false;
-        game.resetRound();
         clearHighlights();
 
         Notification.show("Runda bonusowa — postawiono: " + project.name()
                 + ". Projekt nie będzie już dostępny w kolejnych rundach.");
+        askUserForRowIfNeeded(game.d1() + game.d2());
 
         if (game.getRoundCount() >= 9) {
             UI.getCurrent().navigate(EndScreen.class);
@@ -321,5 +324,42 @@ public class UIGrid extends FlexLayout {
             highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
         }
     }
+
+    public void askUserForRowIfNeeded(int diceSum) {
+        if (diceSum == 2 || diceSum == 12) {
+            Dialog dialog = new Dialog();
+            dialog.setCloseOnEsc(false);
+            dialog.setCloseOnOutsideClick(false);
+
+            FlexLayout layout = new FlexLayout();
+            layout.getStyle().set("gap", "10px");
+
+            for (int i = 0; i < 5; i++) {
+                int row = i;
+                Button btn = new Button("Rząd " + (i + 1), e -> {
+                    dialog.close();
+                    int points = game.calculatePointsForRow(row);
+                    game.addRoundPoints(points);
+                    Notification.show("Runda zakończona — zdobyto " + points + " pkt!");
+                });
+                layout.add(btn);
+            }
+
+            dialog.add(layout);
+            dialog.open();
+        } else {
+            int targetRow;
+            if (diceSum == 3 || diceSum == 4) targetRow = 0;
+            else if (diceSum == 5 || diceSum == 6) targetRow = 1;
+            else if (diceSum == 7) targetRow = 2;
+            else if (diceSum == 8 || diceSum == 9) targetRow = 3;
+            else targetRow = 4;
+
+            int points = game.calculatePointsForRow(targetRow);
+            game.addRoundPoints(points);
+            Notification.show("Runda zakończona — zdobyto " + points + " pkt!");
+        }
+    }
+
 
 }

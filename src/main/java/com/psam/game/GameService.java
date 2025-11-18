@@ -32,7 +32,7 @@ public class GameService {
     private int setupBuildingsPlaced = 0;
 
     private boolean highlightAllColumns = true;
-    private boolean waitingForSecondPlacementAfterDouble = false;
+    public boolean waitingForSecondPlacementAfterDouble = false;
     public boolean activeBonus = false;
 
     public void setUIPoints(UIPoints uiPoints) { this.uiPoints = uiPoints; }
@@ -80,15 +80,8 @@ public class GameService {
             return new PlaceResult(chosenProject, row, col, msg, false);
         } else if (!setupPhase) {
             board.set(row, col, chosenProject);
-            int diceSum = lastD1 + lastD2;
-            int gainedPoints = calculateRoundPoints(diceSum);
-            roundPoints += gainedPoints;
-            totalPoints += roundPoints;
             String msg = "Faza bonusowa: postawiono " + chosenProject + " w kolumnie " + (col + 1)
-                    + " (+ " + gainedPoints + " pkt).";
-            roundCount++;
-            uiPoints.setRoundScore(roundCount, roundPoints);
-            resetRound();
+                    + " (+ " + 1 + " pkt).";
             return new PlaceResult(chosenProject, row, col, msg, true);
         } else {
             return null;
@@ -124,10 +117,11 @@ public class GameService {
         if (waitingForSecondPlacementAfterDouble) {
             project = Project.PLAC;
             board.set(row, chosenColumn, project);
-
             waitingForSecondPlacementAfterDouble = false;
-
             boolean isOver = handleRoundEndIfNeeded();
+            if(isOver){
+                resetRoundFlags();
+            }
 
             String msg = "Drugi ruch po dublecie: postawiono Plac w kolumnie " + (chosenColumn + 1)
                     + (isOver ? " Runda zakończona!" : "");
@@ -183,17 +177,6 @@ public class GameService {
             activeBonus = true;
             return false;
         }
-
-        int diceSum = lastD1 + lastD2;
-        int gainedPoints = calculateRoundPoints(diceSum);
-        System.out.println("Obliczone punkty: " + gainedPoints);
-        roundPoints += gainedPoints;
-        totalPoints += gainedPoints;
-
-        roundCount++;
-        uiPoints.setRoundScore(roundCount, roundPoints);
-
-        resetRound();
         return true;
     }
 
@@ -334,44 +317,22 @@ public class GameService {
 
         return findFreerColumnsRecursive(col, step + 1);
     }
-    public int calculateRoundPoints(int diceSum) {
-        int targetRow;
-        if (diceSum == 3 || diceSum == 4) targetRow = 0;
-        else if (diceSum == 5 || diceSum == 6) targetRow = 1;
-        else if (diceSum == 7) targetRow = 2;
-        else if (diceSum == 8 || diceSum == 9) targetRow = 3;
-        else if (diceSum == 10 || diceSum == 11) targetRow = 4;
-        else throw new IllegalArgumentException("Nieprawidłowa suma oczek: " + diceSum);
 
+    public int calculatePointsForRow(int targetRow) {
         int cols = board.getSize();
         int rows = 5;
         boolean[][] visited = new boolean[rows][cols];
         int totalPoints = 0;
 
-        System.out.println("=== LICZENIE PUNKTÓW DLA RZĘDU " + targetRow + " (suma oczek: " + diceSum + ") ===");
-
         for (int col = 0; col < cols; col++) {
             Project project = board.get(targetRow, col);
-            System.out.println("Sprawdzam pole [r=" + targetRow + ", c=" + col + "] -> " + project);
-
-            if (project == null) continue;
-
-            if (project == Project.PLAC || project == Project.FABRYKA) {
-                System.out.println("Pomijam (PLAC/FABRYKA).");
-                continue;
-            }
-
-            if (visited[targetRow][col]) {
-                System.out.println("Pomijam (już odwiedzone).");
-                continue;
-            }
+            if (project == null || project == Project.PLAC || project == Project.FABRYKA) continue;
+            if (visited[targetRow][col]) continue;
 
             int[] start = findTopLeftStart(targetRow, col, project, new boolean[rows][cols]);
-            System.out.println("Znaleziono top-left start grupy " + project + " na [" + start[0] + "," + start[1] + "]");
-
             boolean[][] groupVisited = new boolean[rows][cols];
             int points = sumPointsByColumns(start[0], start[1], project, groupVisited);
-            System.out.println("Grupa " + project + " = " + points + " pkt");
+
             for (int r = 0; r < rows; r++) {
                 for (int c = 0; c < cols; c++) {
                     if (groupVisited[r][c]) visited[r][c] = true;
@@ -381,8 +342,15 @@ public class GameService {
             totalPoints += points;
         }
 
-        System.out.println("=== ŁĄCZNA LICZBA PUNKTÓW W RUNDZIE: " + totalPoints + " ===");
         return totalPoints;
+    }
+
+    public void addRoundPoints(int points) {
+        roundPoints += points;
+        totalPoints += points;
+        roundCount++;
+        uiPoints.setRoundScore(roundCount, roundPoints);
+        resetRound();
     }
 
     private int[] findTopLeftStart(int row, int col, Project project, boolean[][] visited) {
