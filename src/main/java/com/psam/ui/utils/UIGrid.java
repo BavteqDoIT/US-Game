@@ -201,6 +201,9 @@ public class UIGrid extends FlexLayout {
         askUserForRowIfNeeded(game.d1() + game.d2());
 
         if (game.getRoundCount() >= 9) {
+            System.out.println("\nFINAŁ!\n");
+            System.out.println("Grę zakończono z wynikiem: " + game.getTotalPoints());
+            game.countFinalPoints();
             UI.getCurrent().navigate(EndScreen.class);
         }
     }

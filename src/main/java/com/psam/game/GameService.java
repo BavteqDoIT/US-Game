@@ -439,4 +439,119 @@ public class GameService {
         System.out.println("→ Grupa " + project + " = " + totalPoints + " pkt");
         return totalPoints;
     }
+
+    public void countFinalPoints() {
+        findProject();
+    }
+
+    private void findProject() {
+        totalPoints = getTotalPoints();
+        int cols = board.getSize();
+        int rows = 5;
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                if (board.get(row, col) == Project.FABRYKA) {
+                    fabricFound(row, col);
+                }
+                if (board.get(row, col) == Project.PLAC) {
+                    squareFound(row,col);
+                }
+            }
+        }
+    }
+
+    private void fabricFound(int row, int col) {
+        int points = 0;
+        boolean hasNatureBonus = false;
+
+        int[][] dirs = {
+                {-1, 0},
+                {1, 0},
+                {0, -1},
+                {0, 1}
+        };
+
+        for (int[] d : dirs) {
+            int r = row + d[0];
+            int c = col + d[1];
+
+            if (r < 0 || r >= 5 || c < 0 || c >= board.getSize()) {
+                continue;
+            }
+
+            Project neighbor = board.get(r, c);
+
+            if(neighbor == null) continue;
+
+            switch (neighbor) {
+                case JEZIORO:
+                case LAS:
+                    hasNatureBonus = true;
+                    break;
+
+                case DOM:
+                    points -= 2;
+                    break;
+
+                case PLAC:
+                    points -= 5;
+                    break;
+            }
+        }
+
+        if (hasNatureBonus) {
+            points += 10;
+        }
+        totalPoints += points;
+        System.out.println("Fabryka odnaleziona! \n Łącznie punktów doszło : " + points + "\nA suma punktów obecna to: " + totalPoints);
+    }
+
+    private void squareFound(int row, int col) {
+
+        boolean hasHouse = false;
+        boolean hasForest = false;
+        boolean hasLake = false;
+
+        int[][] dirs = {
+                {-1, 0},
+                {1, 0},
+                {0, -1},
+                {0, 1}
+        };
+
+        for (int[] d : dirs) {
+
+            int r = row + d[0];
+            int c = col + d[1];
+
+            if (r < 0 || r >= 5 || c < 0 || c >= board.getSize()) {
+                continue;
+            }
+
+            Project neighbor = board.get(r, c);
+
+            if (neighbor == null) {
+                continue;
+            }
+
+            switch (neighbor) {
+                case DOM:
+                    hasHouse = true;
+                    break;
+
+                case LAS:
+                    hasForest = true;
+                    break;
+
+                case JEZIORO:
+                    hasLake = true;
+                    break;
+            }
+        }
+
+        if (hasHouse && hasForest && hasLake) {
+            totalPoints += 10;
+            System.out.println("Warunek związany z placem został spełniony + 10 pkt! \n Total points: " + totalPoints );
+        }
+    }
 }
