@@ -337,9 +337,17 @@ public class UIGrid extends FlexLayout {
             FlexLayout layout = new FlexLayout();
             layout.getStyle().set("gap", "10px");
 
-            for (int i = 0; i < 5; i++) {
+            String[] rowNames = {
+                    "Rząd 3–4",
+                    "Rząd 5–6",
+                    "Rząd 7",
+                    "Rząd 8–9",
+                    "Rząd 10–11"
+            };
+
+            for (int i = 0; i < rowNames.length; i++) {
                 int row = i;
-                Button btn = new Button("Rząd " + (i + 1), e -> {
+                Button btn = new Button(rowNames[i], e -> {
                     dialog.close();
                     int points = game.calculatePointsForRow(row);
                     game.addRoundPoints(points);
