@@ -25,9 +25,11 @@ public class UIGrid extends FlexLayout {
     private final Set<Integer> activeColumns = new HashSet<>();
     private boolean waitingForSecondPlacement = false;
     private int initialPlacements;
+    private final MessageService messageService;
 
-    public UIGrid(GameService game) {
+    public UIGrid(GameService game, MessageService messageService) {
         this.game = game;
+        this.messageService = messageService;
         initialPlacements = 0;
 
 
@@ -68,8 +70,10 @@ public class UIGrid extends FlexLayout {
         if (game.shouldHighlightAllColumns()) {
             highlightAll();
             Notification.show("Faza początkowa — wybierz 2 dowolne miejsca na budynki.");
+            messageService.log("Faza początkowa — wybierz 2 dowolne miejsca na budynki.");
         } else {
             Notification.show("Najpierw rzuć kostkami!");
+            messageService.log("Najpierw rzuć kostkami!");
         }
         availableBonusProjects.add(Project.JEZIORO);
         availableBonusProjects.add(Project.LAS);
@@ -127,6 +131,7 @@ public class UIGrid extends FlexLayout {
                 waitingForSecondPlacement = false;
                 clearHighlights();
                 Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
+                messageService.log("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
                 askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
@@ -139,6 +144,7 @@ public class UIGrid extends FlexLayout {
             if (result.roundEnded()) {
                 clearHighlights();
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
+                messageService.log("Runda zakończona! Możesz rzucić kostkami ponownie.");
                 askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
@@ -219,6 +225,7 @@ public class UIGrid extends FlexLayout {
         if (initialPlacements >= 2) {
             clearHighlights();
             Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
+            messageService.log("Faza początkowa zakończona! Możesz rzucić kostkami.");
             game.endInitialPhase();
         }
         if(game.getRoundCount()>=9){
@@ -343,6 +350,7 @@ public class UIGrid extends FlexLayout {
                     "Rząd 8–9",
                     "Rząd 10–11"
             };
+            messageService.log("Wybierz wiersz który chcesz aby gra zliczyła");
 
             for (int i = 0; i < rowNames.length; i++) {
                 int row = i;
@@ -351,6 +359,7 @@ public class UIGrid extends FlexLayout {
                     int points = game.calculatePointsForRow(row);
                     game.addRoundPoints(points);
                     Notification.show("Runda zakończona — zdobyto " + points + " pkt!");
+                    messageService.log("Runda zakończona — zdobyto " + points + " pkt! Rzuć kostkami by rozpocząć kolejną rundę");
                 });
                 layout.add(btn);
             }

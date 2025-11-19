@@ -211,7 +211,7 @@ public class GameService {
         return first == second;
     }
 
-    private Project rollToProject(int roll) {
+    public Project rollToProject(int roll) {
         return switch (roll) {
             case 1, 4 -> Project.DOM;
             case 2, 5 -> Project.LAS;
