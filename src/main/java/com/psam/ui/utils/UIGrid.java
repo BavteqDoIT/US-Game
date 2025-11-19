@@ -2,11 +2,11 @@ package com.psam.ui.utils;
 
 import com.psam.game.GameService;
 import com.psam.game.Project;
-import com.psam.ui.screens.EndScreen;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
@@ -83,7 +83,7 @@ public class UIGrid extends FlexLayout {
                 return;
             }
             if (game.getRoundCount() >= 9) {
-                UI.getCurrent().navigate(EndScreen.class);
+                showEndGameDialog();
                 return;
             }
 
@@ -128,9 +128,8 @@ public class UIGrid extends FlexLayout {
                 clearHighlights();
                 Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
                 askUserForRowIfNeeded(game.d1() + game.d2());
-                System.out.println("PRzeszlo tu");
                 if (game.getRoundCount() >= 9) {
-                    UI.getCurrent().navigate(EndScreen.class);
+                    showEndGameDialog();
                 }
                 return;
             }
@@ -142,7 +141,7 @@ public class UIGrid extends FlexLayout {
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
                 askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
-                    UI.getCurrent().navigate(EndScreen.class);
+                    showEndGameDialog();
                 }
             }
 
@@ -204,7 +203,7 @@ public class UIGrid extends FlexLayout {
             System.out.println("\nFINAŁ!\n");
             System.out.println("Grę zakończono z wynikiem: " + game.getTotalPoints());
             game.countFinalPoints();
-            UI.getCurrent().navigate(EndScreen.class);
+            showEndGameDialog();
         }
     }
 
@@ -223,7 +222,7 @@ public class UIGrid extends FlexLayout {
             game.endInitialPhase();
         }
         if(game.getRoundCount()>=9){
-            UI.getCurrent().navigate(EndScreen.class);
+            showEndGameDialog();
         }
     }
 
@@ -372,5 +371,33 @@ public class UIGrid extends FlexLayout {
         }
     }
 
+    private void showEndGameDialog() {
+        Dialog dialog = new Dialog();
+        H2 title = new H2("Koniec gry!");
+        title.getStyle().set("margin", "0");
+        title.getStyle().set("width", "100%");
+        title.getStyle().set("text-align", "center");
+
+        dialog.getHeader().add(title);
+
+        Div content = new Div();
+        content.getStyle().set("display", "flex");
+        content.getStyle().set("flexDirection", "column");
+        content.getStyle().set("alignItems", "center");
+        content.getStyle().set("gap", "10px");
+
+        content.add(new Span("Twój wynik: " + game.getTotalPoints()));
+
+        Button restart = new Button("Zagraj ponownie", e -> {
+            dialog.close();
+            game.resetGame();
+            UI.getCurrent().getPage().reload();
+        });
+
+        dialog.add(content);
+        dialog.getFooter().add(restart);
+
+        dialog.open();
+    }
 
 }
