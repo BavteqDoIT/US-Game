@@ -462,7 +462,9 @@ public class GameService {
 
     private void fabricFound(int row, int col) {
         int points = 0;
+
         boolean hasNatureBonus = false;
+        boolean hasNegativeParcel = false;
 
         int[][] dirs = {
                 {-1, 0},
@@ -481,7 +483,7 @@ public class GameService {
 
             Project neighbor = board.get(r, c);
 
-            if(neighbor == null) continue;
+            if (neighbor == null) continue;
 
             switch (neighbor) {
                 case JEZIORO:
@@ -491,19 +493,23 @@ public class GameService {
 
                 case DOM:
                     points -= 2;
+                    hasNegativeParcel = true;
                     break;
 
                 case PLAC:
                     points -= 5;
+                    hasNegativeParcel = true;
                     break;
             }
         }
 
-        if (hasNatureBonus) {
+        if (hasNatureBonus && !hasNegativeParcel) {
             points += 10;
         }
         totalPoints += points;
-        System.out.println("Fabryka odnaleziona! \n Łącznie punktów doszło : " + points + "\nA suma punktów obecna to: " + totalPoints);
+
+        System.out.println("Fabryka odnaleziona! \n Łącznie punktów doszło : " + points
+                + "\nA suma punktów obecna to: " + totalPoints);
     }
 
     private void squareFound(int row, int col) {
