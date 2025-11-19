@@ -1,9 +1,5 @@
 package com.psam.game;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class Board {
     private final int size = 6;
     private final Project[][] grid = new Project[size][size];
@@ -30,33 +26,19 @@ public class Board {
     }
 
     private void generatePoints() {
-        List<Integer> allPoints = new ArrayList<>(Collections.nCopies(size * size, 0));
+        int[][] template = {
+                {3,0,2,2,0,3},
+                {0,1,0,0,1,0},
+                {3,0,1,1,0,2},
+                {0,1,0,0,1,0},
+                {3,0,2,2,0,3},
+                {0,0,0,0,0,0}
+        };
 
-        fillPoints(allPoints, 3, 5);
-        fillPoints(allPoints, 2, 5);
-        fillPoints(allPoints, 1, 6);
-
-        Collections.shuffle(allPoints);
-
-
-        int index = 0;
         for (int r = 0; r < size; r++) {
-            for (int c = 0; c < size; c++) {
-                points[r][c] = allPoints.get(index++);
-            }
+            System.arraycopy(template[r], 0, points[r], 0, size);
         }
     }
-
-    private void fillPoints(List<Integer> list, int value, int count) {
-        int placed = 0;
-        for (int i = 0; i < list.size() && placed < count; i++) {
-            if (list.get(i) == 0) {
-                list.set(i, value);
-                placed++;
-            }
-        }
-    }
-
 
     public void clear() {
         for (int r = 0; r < size; r++) {
