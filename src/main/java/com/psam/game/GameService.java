@@ -560,4 +560,8 @@ public class GameService {
             System.out.println("Warunek związany z placem został spełniony + 10 pkt! \n Total points: " + totalPoints );
         }
     }
+
+    public boolean isRoundReadyToEnd() {
+        return firstColumnUsed && secondColumnUsed;
+    }
 }

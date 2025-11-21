@@ -2,6 +2,7 @@ package com.psam.ui.utils;
 
 import com.psam.game.GameService;
 import com.psam.game.Project;
+import com.psam.ui.screens.GameScreen;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -26,10 +27,15 @@ public class UIGrid extends FlexLayout {
     private boolean waitingForSecondPlacement = false;
     private int initialPlacements;
     private final MessageService messageService;
+    private final GameScreen gameScreen;
+    public int getInitialPlacements() {
+        return initialPlacements;
+    }
 
-    public UIGrid(GameService game, MessageService messageService) {
+    public UIGrid(GameService game, MessageService messageService, GameScreen gameScreen) {
         this.game = game;
         this.messageService = messageService;
+        this.gameScreen = gameScreen;
         initialPlacements = 0;
 
 
@@ -120,6 +126,10 @@ public class UIGrid extends FlexLayout {
             var result = game.place(row, col);
             addEmoji(result.row(), result.col(), result.project());
             Notification.show(result.message());
+
+            if (result.roundEnded() || game.isRoundReadyToEnd()) {
+                gameScreen.enableEndRoundButton();
+            }
 
             if (game.shouldHighlightAllColumns()) {
                 highlightAll();
@@ -227,6 +237,7 @@ public class UIGrid extends FlexLayout {
             Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
             messageService.log("Faza początkowa zakończona! Możesz rzucić kostkami.");
             game.endInitialPhase();
+            gameScreen.enableEndRoundButton();
         }
         if(game.getRoundCount()>=9){
             showEndGameDialog();
@@ -372,11 +383,14 @@ public class UIGrid extends FlexLayout {
             else if (diceSum == 5 || diceSum == 6) targetRow = 1;
             else if (diceSum == 7) targetRow = 2;
             else if (diceSum == 8 || diceSum == 9) targetRow = 3;
-            else targetRow = 4;
+            else if (diceSum == 10 || diceSum == 11) targetRow = 4;
+            else targetRow = -1;
 
-            int points = game.calculatePointsForRow(targetRow);
-            game.addRoundPoints(points);
-            Notification.show("Runda zakończona — zdobyto " + points + " pkt!");
+            if(targetRow != -1){
+                int points = game.calculatePointsForRow(targetRow);
+                game.addRoundPoints(points);
+                Notification.show("Runda zakończona — zdobyto " + points + " pkt!");
+            }
         }
     }
 

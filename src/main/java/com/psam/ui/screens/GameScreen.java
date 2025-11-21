@@ -18,6 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Route("main")
 public class GameScreen extends VerticalLayout {
 
+    private Button rollButton;
+    private Button resetButton;
+    private Button endRoundButton;
+
     @Autowired
     public GameScreen(GameService game) {
         setAlignItems(FlexComponent.Alignment.CENTER);
@@ -26,7 +30,7 @@ public class GameScreen extends VerticalLayout {
         setSpacing(true);
 
         MessageService messageService = new MessageService();
-        UIGrid grid = new UIGrid(game, messageService);
+        UIGrid grid = new UIGrid(game, messageService, this);
         grid.refreshHighlights();
 
         UIPoints points = new UIPoints();
@@ -41,13 +45,13 @@ public class GameScreen extends VerticalLayout {
 
         messageService.log("W fazie początkowej musisz postawić 2 dowolne budynki w dowolnym miejscu na planszy. Następnie rzuć kostkami");
 
-        Button rollButton = new Button("🎲 Rzuć kostkami");
-        Button resetButton = new Button("↩️ Reset rundy");
-        Button endRoundButton = new Button("✅ Zakończ rundę");
+        rollButton = new Button("🎲 Rzuć kostkami");
+        resetButton = new Button("↩️ Reset rundy");
+        endRoundButton = new Button("✅ Zakończ rundę");
 
         rollButton.setEnabled(false);
         resetButton.setEnabled(true);
-        endRoundButton.setEnabled(true);
+        endRoundButton.setEnabled(false);
 
         resetButton.addClickListener(e -> {
             try {
@@ -75,7 +79,7 @@ public class GameScreen extends VerticalLayout {
                 game.startRound();
                 rollButton.setEnabled(false);
                 resetButton.setEnabled(true);
-                endRoundButton.setEnabled(true);
+                endRoundButton.setEnabled(false);
                 grid.clearHighlights();
                 grid.highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
                 if(game.isDouble(game.d1(), game.d2())) {
@@ -103,7 +107,11 @@ public class GameScreen extends VerticalLayout {
 
         endRoundButton.addClickListener(e->{
             try{
-                grid.askUserForRowIfNeeded(game.d1() + game.d2());
+                if(grid.getInitialPlacements() >= 2) {
+                    grid.askUserForRowIfNeeded(game.d1() + game.d2());
+                } else {
+                    game.endInitialPhase();
+                }
             } catch (Exception exception){
                 messageService.log(exception.getMessage());
             }
@@ -122,5 +130,11 @@ public class GameScreen extends VerticalLayout {
         setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, gridWithLabels);
         setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, points);
         setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, messageService.getMessagePanel());
+    }
+
+    public void enableEndRoundButton() {
+        endRoundButton.setEnabled(true);
+        rollButton.setEnabled(false);
+        resetButton.setEnabled(true);
     }
 }
