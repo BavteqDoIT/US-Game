@@ -30,7 +30,8 @@ public class GameScreen extends VerticalLayout {
         setSpacing(true);
 
         MessageService messageService = new MessageService();
-        UIGrid grid = new UIGrid(game, messageService, this);
+        UIGrid grid = new UIGrid(game, messageService);
+        grid.setOnEndRoundEnabled(() -> enableEndRoundButton());
         grid.refreshHighlights();
 
         UIPoints points = new UIPoints();

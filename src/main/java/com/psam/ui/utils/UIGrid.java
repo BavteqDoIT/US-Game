@@ -27,15 +27,17 @@ public class UIGrid extends FlexLayout {
     private boolean waitingForSecondPlacement = false;
     private int initialPlacements;
     private final MessageService messageService;
-    private final GameScreen gameScreen;
+    private Runnable onEndRoundEnabled;
     public int getInitialPlacements() {
         return initialPlacements;
     }
+    public void setOnEndRoundEnabled(Runnable listener) {
+        this.onEndRoundEnabled = listener;
+    }
 
-    public UIGrid(GameService game, MessageService messageService, GameScreen gameScreen) {
+    public UIGrid(GameService game, MessageService messageService) {
         this.game = game;
         this.messageService = messageService;
-        this.gameScreen = gameScreen;
         initialPlacements = 0;
 
 
@@ -127,8 +129,10 @@ public class UIGrid extends FlexLayout {
             addEmoji(result.row(), result.col(), result.project());
             Notification.show(result.message());
 
-            if (result.roundEnded() || game.isRoundReadyToEnd()) {
-                gameScreen.enableEndRoundButton();
+            if ((result.roundEnded() || game.isRoundReadyToEnd()) && !game.activeBonus) {
+                if(onEndRoundEnabled != null) {
+                    onEndRoundEnabled.run();
+                }
             }
 
             if (game.shouldHighlightAllColumns()) {
@@ -215,6 +219,10 @@ public class UIGrid extends FlexLayout {
                 + ". Projekt nie będzie już dostępny w kolejnych rundach.");
 //        askUserForRowIfNeeded(game.d1() + game.d2());
 
+        if (onEndRoundEnabled != null) {
+            onEndRoundEnabled.run();
+        }
+
         if (game.getRoundCount() >= 9) {
             System.out.println("\nFINAŁ!\n");
             System.out.println("Grę zakończono z wynikiem: " + game.getTotalPoints());
@@ -237,7 +245,9 @@ public class UIGrid extends FlexLayout {
             Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
             messageService.log("Faza początkowa zakończona! Możesz rzucić kostkami.");
             game.endInitialPhase();
-            gameScreen.enableEndRoundButton();
+            if(onEndRoundEnabled != null) {
+                onEndRoundEnabled.run();
+            }
         }
         if(game.getRoundCount()>=9){
             showEndGameDialog();
@@ -422,5 +432,4 @@ public class UIGrid extends FlexLayout {
 
         dialog.open();
     }
-
 }
