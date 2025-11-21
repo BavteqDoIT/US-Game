@@ -41,9 +41,41 @@ public class GameScreen extends VerticalLayout {
 
         messageService.log("W fazie początkowej musisz postawić 2 dowolne budynki w dowolnym miejscu na planszy. Następnie rzuć kostkami");
 
-        Button rollButton = new Button("🎲 Rzuć kostkami", e -> {
+        Button rollButton = new Button("🎲 Rzuć kostkami");
+        Button resetButton = new Button("↩️ Reset rundy");
+        Button endRoundButton = new Button("✅ Zakończ rundę");
+
+        rollButton.setEnabled(false);
+        resetButton.setEnabled(true);
+        endRoundButton.setEnabled(true);
+
+        resetButton.addClickListener(e -> {
+            try {
+                messageService.log("Zresetowano rundę");
+            } catch (Exception exception){
+                messageService.log(exception.getMessage());
+            }
+        });
+
+        endRoundButton.addClickListener(e -> {
+           try {
+               messageService.log("Zakończono rundę!");
+               rollButton.setEnabled(true);
+               resetButton.setEnabled(false);
+               endRoundButton.setEnabled(false);
+           }catch (Exception exception){
+               messageService.log(exception.getMessage());
+           }
+        });
+
+
+
+        rollButton.addClickListener (e -> {
             try {
                 game.startRound();
+                rollButton.setEnabled(false);
+                resetButton.setEnabled(true);
+                endRoundButton.setEnabled(true);
                 grid.clearHighlights();
                 grid.highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
                 if(game.isDouble(game.d1(), game.d2())) {
@@ -69,12 +101,24 @@ public class GameScreen extends VerticalLayout {
             }
         });
 
-        add(rollButton);
+        endRoundButton.addClickListener(e->{
+            try{
+                grid.askUserForRowIfNeeded(game.d1() + game.d2());
+            } catch (Exception exception){
+                messageService.log(exception.getMessage());
+            }
+        });
+
+        HorizontalLayout controls = new HorizontalLayout(rollButton, resetButton, endRoundButton);
+        controls.setAlignItems(FlexComponent.Alignment.CENTER);
+        controls.setSpacing(true);
+
+        add(controls);
         add(gridWithLabels);
         add(points);
         add(messageService.getMessagePanel());
 
-        setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, rollButton);
+        setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, controls);
         setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, gridWithLabels);
         setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, points);
         setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, messageService.getMessagePanel());

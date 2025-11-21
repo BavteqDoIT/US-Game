@@ -132,7 +132,7 @@ public class UIGrid extends FlexLayout {
                 clearHighlights();
                 Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
                 messageService.log("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
-                askUserForRowIfNeeded(game.d1() + game.d2());
+//                askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
                 }
@@ -145,7 +145,7 @@ public class UIGrid extends FlexLayout {
                 clearHighlights();
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
                 messageService.log("Runda zakończona! Możesz rzucić kostkami ponownie.");
-                askUserForRowIfNeeded(game.d1() + game.d2());
+//                askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
                 }
@@ -203,7 +203,7 @@ public class UIGrid extends FlexLayout {
 
         Notification.show("Runda bonusowa — postawiono: " + project.name()
                 + ". Projekt nie będzie już dostępny w kolejnych rundach.");
-        askUserForRowIfNeeded(game.d1() + game.d2());
+//        askUserForRowIfNeeded(game.d1() + game.d2());
 
         if (game.getRoundCount() >= 9) {
             System.out.println("\nFINAŁ!\n");
