@@ -108,10 +108,22 @@ public class GameScreen extends VerticalLayout {
 
         endRoundButton.addClickListener(e->{
             try{
-                if(grid.getInitialPlacements() >= 2) {
+                if(!game.isSetupPhase()) {
                     grid.askUserForRowIfNeeded(game.d1() + game.d2());
                 } else {
                     game.endInitialPhase();
+                }
+            } catch (Exception exception){
+                messageService.log(exception.getMessage());
+            }
+        });
+
+        resetButton.addClickListener(e->{
+            try{
+                if(!game.isSetupPhase()) {
+                    System.out.println("Reset z normalnego");
+                } else {
+                    System.out.println("Reset z inicjacji");
                 }
             } catch (Exception exception){
                 messageService.log(exception.getMessage());

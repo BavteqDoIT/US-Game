@@ -72,7 +72,6 @@ public class GameService {
             String msg = "Faza początkowa: postawiono " + chosenProject + " w kolumnie " + (col + 1);
 
             if (setupBuildingsPlaced >= 2) {
-                setupPhase = false;
                 highlightAllColumns = false;
                 msg += " Faza początkowa zakończona — możesz rozpocząć pierwszą rundę (rzuć kostkami).";
             }

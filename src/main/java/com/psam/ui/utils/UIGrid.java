@@ -244,7 +244,6 @@ public class UIGrid extends FlexLayout {
             clearHighlights();
             Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
             messageService.log("Faza początkowa zakończona! Możesz rzucić kostkami.");
-            game.endInitialPhase();
             if(onEndRoundEnabled != null) {
                 onEndRoundEnabled.run();
             }
