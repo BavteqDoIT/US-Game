@@ -69,8 +69,8 @@ public class GameService {
         if (isGameOver())
             throw new IllegalStateException("Gra już się zakończyła!");
 
-        lastD1 = 1 + rng.nextInt(6);
-        lastD2 = 1 + rng.nextInt(6);
+        lastD1 = 1;
+        lastD2 = 2;
         resetRoundFlags();
         roundActive = true;
         saveSnapshot();
@@ -288,7 +288,8 @@ public class GameService {
     }
 
     public List<Integer> findFreerColumnsRecursive(int col, int step) {
-        int size = board.getSize();
+        int rows = board.getRowCount();
+        int cols = board.getColCount();
         List<Integer> result = new ArrayList<>();
 
         int lowerCol = col - step;
@@ -298,42 +299,46 @@ public class GameService {
         int freeUpper = 0;
 
         if (lowerCol >= 0) {
-            for (int row = 0; row < size; row++) {
-                if (board.get(row, lowerCol) == null) {
-                    freeLower++;
-                }
+            for (int row = 0; row < rows; row++) {
+                if (board.get(row, lowerCol) == null) freeLower++;
             }
+            System.out.println("Kolumna " + lowerCol + " ma " + freeLower + " wolnych pól");
         }
 
-        if (upperCol < size) {
-            for (int row = 0; row < size; row++) {
-                if (board.get(row, upperCol) == null) {
-                    freeUpper++;
-                }
+        if (upperCol < cols) {
+            for (int row = 0; row < rows; row++) {
+                if (board.get(row, upperCol) == null) freeUpper++;
             }
+            System.out.println("Kolumna " + upperCol + " ma " + freeUpper + " wolnych pól");
         }
 
         if (freeLower > 0 || freeUpper > 0) {
             if (freeLower > freeUpper) {
+                System.out.println("Wybieram kolumnę " + lowerCol + " (więcej miejsca niż po prawej)");
                 result.add(lowerCol);
             } else if (freeUpper > freeLower) {
+                System.out.println("Wybieram kolumnę " + upperCol + " (więcej miejsca niż po lewej)");
                 result.add(upperCol);
             } else if (freeLower == freeUpper && freeLower > 0) {
+                System.out.println("Kolumny " + lowerCol + " i " + upperCol + " mają tyle samo wolnego miejsca, dodaję obie");
                 if (lowerCol >= 0) result.add(lowerCol);
-                if (upperCol < size) result.add(upperCol);
+                if (upperCol < cols) result.add(upperCol);
             }
             return result;
         }
 
         boolean canGoLeft = lowerCol >= 0;
-        boolean canGoRight = upperCol < size;
+        boolean canGoRight = upperCol < cols;
 
         if (!canGoLeft && !canGoRight) {
+            System.out.println("Brak dalszych kolumn do sprawdzenia, kończę rekurencję");
             return result;
         }
 
+        System.out.println("Nie znaleziono wolnych miejsc, idę dalej w kroku " + (step + 1));
         return findFreerColumnsRecursive(col, step + 1);
     }
+
 
     public int calculatePointsForRow(int targetRow) {
         int cols = board.getSize();

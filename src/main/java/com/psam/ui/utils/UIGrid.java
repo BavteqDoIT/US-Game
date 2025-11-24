@@ -161,14 +161,13 @@ public class UIGrid extends FlexLayout {
             int remaining = activeColumnUsage.getOrDefault(col, 0) - 1;
             if (remaining <= 0) {
                 activeColumnUsage.remove(col);
-                deactivateColumn(col); // tylko jeśli wszystkie projekty w tej rundzie już w tej kolumnie położone
+                deactivateColumn(col);
             } else {
                 activeColumnUsage.put(col, remaining);
             }
 
-// a następnie odśwież pozostałe kolumny jeśli runda się nie kończy
             if (!result.roundEnded()) {
-                refreshHighlights(); // tylko aktywne kolumny zostaną podświetlone
+                refreshHighlights();
             }
 
             if (result.roundEnded()) {
@@ -320,7 +319,7 @@ public class UIGrid extends FlexLayout {
 
             for (int c : cols) {
                 highlightColumn(c);
-                activeColumnUsage.put(c, activeColumnUsage.getOrDefault(c, 0) + 2); // podwójne
+                activeColumnUsage.put(c, activeColumnUsage.getOrDefault(c, 0) + 2);
             }
         }
     }
@@ -362,11 +361,9 @@ public class UIGrid extends FlexLayout {
         if (game.isSetupPhase()) {
             highlightAll();
         } else if (game.isRoundActive()) {
-            // Odśwież tylko aktywne kolumny
             Set<Integer> columnsToKeep = new HashSet<>(activeColumns);
-            activeColumns.clear(); // odświeżymy je poniżej
+            activeColumns.clear();
             for (int col : columnsToKeep) {
-                // jeśli kolumna ma wolne miejsce, podświetl ją
                 if (game.hasFreeSpaceInColumn(col)) {
                     highlightColumn(col);
                 }

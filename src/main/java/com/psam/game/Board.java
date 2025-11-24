@@ -2,6 +2,8 @@ package com.psam.game;
 
 public class Board {
     private final int size = 6;
+    public int getRowCount() { return 5; }
+    public int getColCount() { return 6; }
     private final Project[][] grid = new Project[size][size];
     private final int[][] points = new int[size][size];
 
