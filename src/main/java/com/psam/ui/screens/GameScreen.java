@@ -124,6 +124,8 @@ public class GameScreen extends VerticalLayout {
                     System.out.println("Reset z normalnego");
                 } else {
                     System.out.println("Reset z inicjacji");
+                    game.resetGame();
+                    UI.getCurrent().getPage().reload();
                 }
             } catch (Exception exception){
                 messageService.log(exception.getMessage());

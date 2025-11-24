@@ -79,9 +79,6 @@ public class UIGrid extends FlexLayout {
             highlightAll();
             Notification.show("Faza początkowa — wybierz 2 dowolne miejsca na budynki.");
             messageService.log("Faza początkowa — wybierz 2 dowolne miejsca na budynki.");
-        } else {
-            Notification.show("Najpierw rzuć kostkami!");
-            messageService.log("Najpierw rzuć kostkami!");
         }
         availableBonusProjects.add(Project.JEZIORO);
         availableBonusProjects.add(Project.LAS);
