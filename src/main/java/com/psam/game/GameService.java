@@ -1,17 +1,29 @@
 package com.psam.game;
 
 import com.psam.ui.screens.GameScreen;
+import com.psam.ui.utils.UIGrid;
 import com.psam.ui.utils.UIPoints;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class GameService {
+    public static class RoundSnapshot {
+        public Board board;
+        public int totalPoints;
+        public int roundCount;
+        public boolean isBonusRound;
+        public boolean activeBonus;
+        public int d1;
+        public int d2;
+        public boolean setupPhase;
+        public int setupBuildingsPlaced;
+        public Set<Project> availableBonusProjects;
+    }
 
     private static final int MAX_ROUNDS = 9;
+    private RoundSnapshot snapshot;
 
     private final Random rng = new Random();
     private final Board board = new Board();
@@ -34,7 +46,11 @@ public class GameService {
     private boolean highlightAllColumns = true;
     public boolean waitingForSecondPlacementAfterDouble = false;
     public boolean activeBonus = false;
+    private UIGrid uiGrid;
 
+    public void setUIGrid(UIGrid uiGrid) {
+        this.uiGrid = uiGrid;
+    }
     public void setUIPoints(UIPoints uiPoints) { this.uiPoints = uiPoints; }
     public Board board() { return board; }
     public int d1() { return lastD1; }
@@ -57,6 +73,7 @@ public class GameService {
         lastD2 = 1 + rng.nextInt(6);
         resetRoundFlags();
         roundActive = true;
+        saveSnapshot();
     }
 
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
@@ -156,7 +173,8 @@ public class GameService {
         } else if (isSecondCol && !secondColumnUsed) {
             project = rollToProject(lastD1);
             secondColumnUsed = true;
-        } else {
+        }
+        else {
             throw new IllegalStateException("W tej kolumnie już postawiono budynek!");
         }
 
@@ -562,5 +580,47 @@ public class GameService {
 
     public boolean isRoundReadyToEnd() {
         return firstColumnUsed && secondColumnUsed;
+    }
+    public void saveSnapshot() {
+        RoundSnapshot snap = new RoundSnapshot();
+
+        snap.board = board.copy();
+
+        snap.totalPoints = totalPoints;
+        snap.roundCount = roundCount;
+        snap.activeBonus = activeBonus;
+
+        snap.d1 = lastD1;
+        snap.d2 = lastD2;
+        snap.setupPhase = this.setupPhase;
+        snap.setupBuildingsPlaced = this.setupBuildingsPlaced;
+        snap.availableBonusProjects = new HashSet<>(uiGrid.getAvailableBonusProjects());
+        this.snapshot = snap;
+    }
+
+    public void restoreSnapshot() {
+        if (snapshot == null) return;
+
+        for (int r = 0; r < board.getSize(); r++) {
+            for (int c = 0; c < board.getSize(); c++) {
+                board.set(r, c, snapshot.board.get(r, c));
+            }
+        }
+
+        totalPoints = snapshot.totalPoints;
+        roundCount = snapshot.roundCount;
+
+
+        activeBonus = snapshot.activeBonus;
+
+        lastD1 = snapshot.d1;
+        lastD2 = snapshot.d2;
+        this.setupPhase = snapshot.setupPhase;
+        this.setupBuildingsPlaced = snapshot.setupBuildingsPlaced;
+        uiGrid.setAvailableBonusProjects(new HashSet<>(snapshot.availableBonusProjects));
+        firstColumnUsed = false;
+        secondColumnUsed = false;
+        placed = false;
+        roundPoints = 0;
     }
 }

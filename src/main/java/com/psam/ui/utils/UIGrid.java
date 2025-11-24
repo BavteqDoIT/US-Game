@@ -1,5 +1,6 @@
 package com.psam.ui.utils;
 
+import com.psam.game.Board;
 import com.psam.game.GameService;
 import com.psam.game.Project;
 import com.psam.ui.screens.GameScreen;
@@ -28,11 +29,19 @@ public class UIGrid extends FlexLayout {
     private int initialPlacements;
     private final MessageService messageService;
     private Runnable onEndRoundEnabled;
+    public Set<Project> getAvailableBonusProjects() {
+        return availableBonusProjects;
+    }
     public int getInitialPlacements() {
         return initialPlacements;
     }
     public void setOnEndRoundEnabled(Runnable listener) {
         this.onEndRoundEnabled = listener;
+    }
+
+    public void setAvailableBonusProjects(Set<Project> projects) {
+        availableBonusProjects.clear();
+        availableBonusProjects.addAll(projects);
     }
 
     public UIGrid(GameService game, MessageService messageService) {
@@ -427,5 +436,38 @@ public class UIGrid extends FlexLayout {
         dialog.getFooter().add(restart);
 
         dialog.open();
+    }
+
+    public void restoreFromBoard(Project[][] board) {
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                Div cell = cells[r][c];
+                cell.removeAll();
+
+                Project p = board[r][c];
+                if (p != null) {
+                    Span emoji = new Span(getEmoji(p));
+                    emoji.getStyle().set("font-size", "40px");
+                    cell.add(emoji);
+                }
+
+                int cellPoints = game.board().getPoints(r, c);
+                if (cellPoints > 0) {
+                    Span pointLabel = new Span(String.valueOf(cellPoints));
+                    pointLabel.getStyle().set("position", "absolute");
+                    pointLabel.getStyle().set("bottom", "2px");
+                    pointLabel.getStyle().set("right", "4px");
+                    pointLabel.getStyle().set("font-size", "12px");
+                    pointLabel.getStyle().set("color", "gray");
+                    cell.add(pointLabel);
+                }
+            }
+        }
+
+        refreshHighlights();
+    }
+
+    public void restoreFromBoard(Board boardObj) {
+        restoreFromBoard(boardObj.getGrid());
     }
 }

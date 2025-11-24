@@ -47,4 +47,20 @@ public class Board {
             }
         }
     }
+
+    public Board copy() {
+        Board b = new Board();
+
+        for (int r = 0; r < size; r++) {
+            for (int c = 0; c < size; c++) {
+                b.grid[r][c] = this.grid[r][c];
+            }
+        }
+
+        return b;
+    }
+
+    public Project[][] getGrid() {
+        return grid;
+    }
 }

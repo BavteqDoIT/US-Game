@@ -31,6 +31,7 @@ public class GameScreen extends VerticalLayout {
 
         MessageService messageService = new MessageService();
         UIGrid grid = new UIGrid(game, messageService);
+        game.setUIGrid(grid);
         grid.setOnEndRoundEnabled(() -> enableEndRoundButton());
         grid.refreshHighlights();
 
@@ -110,6 +111,7 @@ public class GameScreen extends VerticalLayout {
             try{
                 if(!game.isSetupPhase()) {
                     grid.askUserForRowIfNeeded(game.d1() + game.d2());
+                    System.out.println("Total punkty: " + game.getTotalPoints());
                 } else {
                     game.endInitialPhase();
                 }
@@ -121,9 +123,12 @@ public class GameScreen extends VerticalLayout {
         resetButton.addClickListener(e->{
             try{
                 if(!game.isSetupPhase()) {
-                    System.out.println("Reset z normalnego");
+                    game.restoreSnapshot();
+                    grid.restoreFromBoard(game.board());
+                    grid.refreshHighlights();
+                    messageService.log("Przywrócono stan rundy.");
+                    endRoundButton.setEnabled(false);
                 } else {
-                    System.out.println("Reset z inicjacji");
                     game.resetGame();
                     UI.getCurrent().getPage().reload();
                 }
