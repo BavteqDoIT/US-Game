@@ -13,9 +13,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class UIGrid extends FlexLayout {
     private final Set<Project> availableBonusProjects = new HashSet<>();
@@ -29,6 +27,7 @@ public class UIGrid extends FlexLayout {
     private int initialPlacements;
     private final MessageService messageService;
     private Runnable onEndRoundEnabled;
+    private final Map<Integer, Integer> activeColumnUsage = new HashMap<>();
     public Set<Project> getAvailableBonusProjects() {
         return availableBonusProjects;
     }
@@ -159,7 +158,18 @@ public class UIGrid extends FlexLayout {
                 return;
             }
 
-            deactivateColumn(col);
+            int remaining = activeColumnUsage.getOrDefault(col, 0) - 1;
+            if (remaining <= 0) {
+                activeColumnUsage.remove(col);
+                deactivateColumn(col); // tylko jeśli wszystkie projekty w tej rundzie już w tej kolumnie położone
+            } else {
+                activeColumnUsage.put(col, remaining);
+            }
+
+// a następnie odśwież pozostałe kolumny jeśli runda się nie kończy
+            if (!result.roundEnded()) {
+                refreshHighlights(); // tylko aktywne kolumny zostaną podświetlone
+            }
 
             if (result.roundEnded()) {
                 clearHighlights();
@@ -278,46 +288,43 @@ public class UIGrid extends FlexLayout {
     public void highlightRoundColumns(boolean isDouble) {
         clearHighlights();
         activeColumns.clear();
+        activeColumnUsage.clear();
 
         if (!isDouble) {
             int col1 = game.d1() - 1;
             int col2 = game.d2() - 1;
 
-            System.out.println("Kolumna 1: " + col1);
-            System.out.println("Kolumna 2: " + col2);
+            List<Integer> colsForCol1 = game.hasFreeSpaceInColumn(col1)
+                    ? List.of(col1)
+                    : game.findFreerColumnsRecursive(col1, 1);
 
-            if (game.hasFreeSpaceInColumn(col1)) {
-                highlightColumn(col1);
-            } else {
-                List<Integer> freer = game.findFreerColumnsRecursive(col1, 1);
-                for (int freeCol : freer) {
-                    highlightColumn(freeCol);
-                }
+            for (int c : colsForCol1) {
+                highlightColumn(c);
+                activeColumnUsage.put(c, activeColumnUsage.getOrDefault(c, 0) + 1);
             }
 
-            if (game.hasFreeSpaceInColumn(col2)) {
-                highlightColumn(col2);
-            } else {
-                List<Integer> freer = game.findFreerColumnsRecursive(col2, 1);
-                for (int freeCol : freer) {
-                    highlightColumn(freeCol);
-                }
+            List<Integer> colsForCol2 = game.hasFreeSpaceInColumn(col2)
+                    ? List.of(col2)
+                    : game.findFreerColumnsRecursive(col2, 1);
+
+            for (int c : colsForCol2) {
+                highlightColumn(c);
+                activeColumnUsage.put(c, activeColumnUsage.getOrDefault(c, 0) + 1);
             }
 
         } else {
             int col = game.d1() - 1;
-            System.out.println("Kolumna dublowa: " + col);
+            List<Integer> cols = game.hasFreeSpaceInColumn(col)
+                    ? List.of(col)
+                    : game.findFreerColumnsRecursive(col, 1);
 
-            if (game.hasFreeSpaceInColumn(col)) {
-                highlightColumn(col);
-            } else {
-                List<Integer> freer = game.findFreerColumnsRecursive(col, 1);
-                for (int freeCol : freer) {
-                    highlightColumn(freeCol);
-                }
+            for (int c : cols) {
+                highlightColumn(c);
+                activeColumnUsage.put(c, activeColumnUsage.getOrDefault(c, 0) + 2); // podwójne
             }
         }
     }
+
 
     private void highlightColumn(int col) {
         activeColumns.add(col);
@@ -352,11 +359,18 @@ public class UIGrid extends FlexLayout {
     }
 
     public void refreshHighlights() {
-        clearHighlights();
         if (game.isSetupPhase()) {
             highlightAll();
         } else if (game.isRoundActive()) {
-            highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
+            // Odśwież tylko aktywne kolumny
+            Set<Integer> columnsToKeep = new HashSet<>(activeColumns);
+            activeColumns.clear(); // odświeżymy je poniżej
+            for (int col : columnsToKeep) {
+                // jeśli kolumna ma wolne miejsce, podświetl ją
+                if (game.hasFreeSpaceInColumn(col)) {
+                    highlightColumn(col);
+                }
+            }
         }
     }
 
@@ -409,7 +423,7 @@ public class UIGrid extends FlexLayout {
         }
     }
 
-    private void showEndGameDialog() {
+    public void showEndGameDialog() {
         Dialog dialog = new Dialog();
         H2 title = new H2("Koniec gry!");
         title.getStyle().set("margin", "0");

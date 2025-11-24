@@ -115,6 +115,9 @@ public class GameScreen extends VerticalLayout {
                 } else {
                     game.endInitialPhase();
                 }
+                if (game.getRoundCount() >= 9) {
+                    grid.showEndGameDialog();
+                }
             } catch (Exception exception){
                 messageService.log(exception.getMessage());
             }
