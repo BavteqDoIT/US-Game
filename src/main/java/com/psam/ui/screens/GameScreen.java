@@ -22,6 +22,7 @@ public class GameScreen extends VerticalLayout {
     private Button resetButton;
     private Button endRoundButton;
     private final GameService game;
+    private String lastRollMessage = "";
 
     @Autowired
     public GameScreen(GameService game) {
@@ -47,7 +48,7 @@ public class GameScreen extends VerticalLayout {
         gridWithLabels.setAlignItems(FlexComponent.Alignment.START);
         gridWithLabels.setSpacing(true);
 
-        messageService.log("W fazie początkowej musisz postawić 2 dowolne budynki w dowolnym miejscu na planszy. Następnie rzuć kostkami");
+        messageService.log("W fazie początkowej musisz postawić 2 dowolne budynki w dowolnym miejscu na planszy.");
 
         rollButton = new Button("🎲 Rzuć kostkami");
         resetButton = new Button("↩️ Reset rundy");
@@ -67,7 +68,10 @@ public class GameScreen extends VerticalLayout {
 
         endRoundButton.addClickListener(e -> {
            try {
-               messageService.log("Zakończono rundę!");
+               if(game.getRoundCount() >= 8){
+                   messageService.log("Gratulację! Zdobyłeś " + game.getTotalPoints() + " punktów!");
+               }
+               messageService.log("Zakończono rundę! By rozpocząć kolejną rzuć kostkami.");
                rollButton.setEnabled(true);
                resetButton.setEnabled(false);
                endRoundButton.setEnabled(false);
@@ -87,19 +91,41 @@ public class GameScreen extends VerticalLayout {
                 grid.clearHighlights();
                 grid.highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
                 if(game.isDouble(game.d1(), game.d2())) {
-                    messageService.log("Wyrzuciłeś podwójnie 🎲 " + game.d1() +" → "+
-                            "początkowo postaw " + game.rollToProject(game.d1()).name() + " w podświetlonej kolumnie, a następnie Plac w dowolnym dostępnym miejscu"
-                    );
+                    lastRollMessage = "Wyrzuciłeś podwójnie 🎲 " + game.d1() +" → "+
+                            "początkowo postaw " + game.rollToProject(game.d1()).name() + " w podświetlonej kolumnie, a następnie Plac w dowolnym dostępnym miejscu";
                 } else if (game.isSame(game.rollToProject(game.d1()), game.rollToProject(game.d2()))) {
-                    messageService.log("Wyrzuciłeś: 🎲 " + game.d1() + " i 🎲 " + game.d2() +" → "+
-                            "początkowo postaw " + game.rollToProject(game.d1()).name() + " w jednej z podświetlonych kolumn, a następnie Fabrykę w drugiej"
-                    );
+                    lastRollMessage = "Wyrzuciłeś: 🎲 " + game.d1() + " i 🎲 " + game.d2() +" → "+
+                            "początkowo postaw " + game.rollToProject(game.d1()).name() + " w jednej z podświetlonych kolumn, a następnie Fabrykę w drugiej";
                 } else {
-                    messageService.log("Wyrzuciłeś: 🎲 " + game.d1() + " i 🎲 " + game.d2() +
-                            " → " +
-                            "możesz postawić " + game.rollToProject(game.d1()).name() + " w kolumnie " + game.d2() +
-                            " oraz " + game.rollToProject(game.d2()).name() + " w kolumnie " + game.d1());
+                    int d1 = game.d1();
+                    int d2 = game.d2();
+
+                    String project1 = game.rollToProject(d1).name();
+                    String project2 = game.rollToProject(d2).name();
+
+                    boolean d1Free = game.hasFreeSpaceInColumn(d1 - 1);
+                    boolean d2Free = game.hasFreeSpaceInColumn(d2 - 1);
+
+                    String msg1;
+                    String msg2;
+
+                    if (d1Free) {
+                        msg1 = project1 + " w kolumnie " + d2;
+                    } else {
+                        msg1 = "kolumna " + d2 + " (dla " + project1 + ") jest przepełniona — postaw budynek w podświetlonej kolumnie";
+                    }
+
+                    if (d2Free) {
+                        msg2 = project2 + " w kolumnie " + d1;
+                    } else {
+                        msg2 = "kolumna " + d1 + " (dla " + project2 + ") jest przepełniona — postaw budynek w podświetlonej kolumnie";
+                    }
+
+                    lastRollMessage =
+                            "Wyrzuciłeś: 🎲 " + d1 + " i 🎲 " + d2 + " → możesz postawić " +
+                                    msg1 + " oraz " + msg2;
                 }
+                messageService.log(lastRollMessage);
 
                 if (game.isGameOver()) {
                     UI.getCurrent().navigate("end");
@@ -132,7 +158,7 @@ public class GameScreen extends VerticalLayout {
                     grid.restoreFromBoard(game.board());
                     grid.clearHighlights();
                     grid.highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
-                    messageService.log("Przywrócono stan rundy.");
+                    messageService.log("Zresetowano rundę! " + lastRollMessage);
                     endRoundButton.setEnabled(false);
                 } else {
                     game.resetGame();

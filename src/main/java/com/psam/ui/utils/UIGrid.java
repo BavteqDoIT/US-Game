@@ -25,7 +25,7 @@ public class UIGrid extends FlexLayout {
     private final Set<Integer> activeColumns = new HashSet<>();
     private boolean waitingForSecondPlacement = false;
     private int initialPlacements;
-    private final MessageService messageService;
+    public final MessageService messageService;
     private Runnable onEndRoundEnabled;
     private final Map<Integer, Integer> activeColumnUsage = new HashMap<>();
     public Set<Project> getAvailableBonusProjects() {
@@ -149,8 +149,7 @@ public class UIGrid extends FlexLayout {
             if (waitingForSecondPlacement) {
                 waitingForSecondPlacement = false;
                 clearHighlights();
-                Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
-                messageService.log("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
+                messageService.log("Rozmieszczenie po double zakończone! Zakończ rundę by przejść do kolejnej rundy!");
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
                 }
@@ -171,8 +170,7 @@ public class UIGrid extends FlexLayout {
 
             if (result.roundEnded()) {
                 clearHighlights();
-                Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
-                messageService.log("Runda zakończona! Możesz rzucić kostkami ponownie.");
+                messageService.log("Rozmieszczenie zakończone! By przejść do rzutu kostkami zakończ rundę!.");
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
                 }
@@ -228,8 +226,7 @@ public class UIGrid extends FlexLayout {
         game.activeBonus = false;
         clearHighlights();
 
-        Notification.show("Runda bonusowa — postawiono: " + project.name()
-                + ". Projekt nie będzie już dostępny w kolejnych rundach.");
+        messageService.log("Rozmieszczenie w rundzie bonusowej zakończone. Postawiono: " + project.name() + ". Projekt nie będzie już dostępny w kolejnych rundach. Zakończ rundę by przejść do rzucenia kostką!");
 
         if (onEndRoundEnabled != null) {
             onEndRoundEnabled.run();
@@ -253,8 +250,8 @@ public class UIGrid extends FlexLayout {
 
         if (initialPlacements >= 2) {
             clearHighlights();
-            Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
-            messageService.log("Faza początkowa zakończona! Możesz rzucić kostkami.");
+//            Notification.show("Faza początkowa zakończona! Możesz rzucić kostkami.");
+            messageService.log("Faza rozmieszczenia zakończona! Zakończ rundę aby rzucić kostkami.");
             if(onEndRoundEnabled != null) {
                 onEndRoundEnabled.run();
             }

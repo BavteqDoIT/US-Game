@@ -224,6 +224,7 @@ public class GameService {
 
     private boolean handleRoundEndIfNeeded() {
         if (isBonusRound()) {
+            uiGrid.messageService.log("Runda Bonusowa! Wybierz bonusowy projekt i umieść w dowolnym wolnym miejscu! Pamiętaj projekt nie będzie dostępny już w innych bonusowych rundach do końca gry!");
             highlightAllColumns = true;
             activeBonus = true;
             return false;
