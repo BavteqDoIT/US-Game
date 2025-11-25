@@ -396,6 +396,10 @@ public class UIGrid extends FlexLayout {
                     game.addRoundPoints(points);
                     Notification.show("Runda zakończona — zdobyto " + points + " pkt!");
                     messageService.log("Runda zakończona — zdobyto " + points + " pkt! Rzuć kostkami by rozpocząć kolejną rundę");
+                    if (game.getRoundCount() >= 9) {
+                        showEndGameDialog();
+                        messageService.log("Koniec Gry! Zdobyłeś " + game.getTotalPoints() + " pkt!");
+                    }
                 });
                 layout.add(btn);
             }
