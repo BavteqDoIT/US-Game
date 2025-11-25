@@ -320,9 +320,13 @@ public class GameService {
                 System.out.println("Wybieram kolumnę " + upperCol + " (więcej miejsca niż po lewej)");
                 result.add(upperCol);
             } else if (freeLower == freeUpper && freeLower > 0) {
-                System.out.println("Kolumny " + lowerCol + " i " + upperCol + " mają tyle samo wolnego miejsca, dodaję obie");
-                if (lowerCol >= 0) result.add(lowerCol);
-                if (upperCol < cols) result.add(upperCol);
+                int chosen = Math.min(lowerCol, upperCol);
+                System.out.println(
+                        "Kolumny " + lowerCol + " i " + upperCol +
+                                " mają tyle samo wolnego miejsca (" + freeLower +
+                                "), wybieram kolumnę o niższym indeksie: " + chosen
+                );
+                result.add(chosen);
             }
             return result;
         }

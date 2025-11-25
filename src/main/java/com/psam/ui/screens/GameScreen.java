@@ -128,7 +128,8 @@ public class GameScreen extends VerticalLayout {
                 if(!game.isSetupPhase()) {
                     game.restoreSnapshot();
                     grid.restoreFromBoard(game.board());
-                    grid.refreshHighlights();
+                    grid.clearHighlights();
+                    grid.highlightRoundColumns(game.isDouble(game.d1(), game.d2()));
                     messageService.log("Przywrócono stan rundy.");
                     endRoundButton.setEnabled(false);
                 } else {
