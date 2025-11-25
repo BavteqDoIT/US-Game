@@ -21,9 +21,11 @@ public class GameScreen extends VerticalLayout {
     private Button rollButton;
     private Button resetButton;
     private Button endRoundButton;
+    private final GameService game;
 
     @Autowired
     public GameScreen(GameService game) {
+        this.game = game;
         setAlignItems(FlexComponent.Alignment.CENTER);
         setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
         setSizeFull();
@@ -116,7 +118,7 @@ public class GameScreen extends VerticalLayout {
                     game.endInitialPhase();
                 }
                 if (game.getRoundCount() >= 9) {
-                    grid.showEndGameDialog();
+                    showEndGameButton(grid);
                 }
             } catch (Exception exception){
                 messageService.log(exception.getMessage());
@@ -160,5 +162,30 @@ public class GameScreen extends VerticalLayout {
         endRoundButton.setEnabled(true);
         rollButton.setEnabled(false);
         resetButton.setEnabled(true);
+    }
+
+    private void showEndGameButton(UIGrid grid) {
+        rollButton.setVisible(false);
+        resetButton.setVisible(false);
+        endRoundButton.setVisible(false);
+
+        Button backToStartButton = new Button("⬅️ Wróć do ekranu startowego");
+        backToStartButton.addClickListener(ev -> {
+            try {
+                game.resetGame();
+                UI.getCurrent().navigate(StartScreen.class);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        HorizontalLayout newControls = new HorizontalLayout(backToStartButton);
+        newControls.setAlignItems(FlexComponent.Alignment.CENTER);
+        newControls.setSpacing(true);
+
+        add(newControls);
+        setHorizontalComponentAlignment(FlexComponent.Alignment.CENTER, newControls);
+
+        grid.showEndGameDialog();
     }
 }

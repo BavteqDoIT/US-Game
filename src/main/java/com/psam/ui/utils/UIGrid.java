@@ -151,7 +151,6 @@ public class UIGrid extends FlexLayout {
                 clearHighlights();
                 Notification.show("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
                 messageService.log("Runda zakończona po dublu! Możesz rzucić kostkami ponownie.");
-//                askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
                 }
@@ -174,7 +173,6 @@ public class UIGrid extends FlexLayout {
                 clearHighlights();
                 Notification.show("Runda zakończona! Możesz rzucić kostkami ponownie.");
                 messageService.log("Runda zakończona! Możesz rzucić kostkami ponownie.");
-//                askUserForRowIfNeeded(game.d1() + game.d2());
                 if (game.getRoundCount() >= 9) {
                     showEndGameDialog();
                 }
@@ -232,7 +230,6 @@ public class UIGrid extends FlexLayout {
 
         Notification.show("Runda bonusowa — postawiono: " + project.name()
                 + ". Projekt nie będzie już dostępny w kolejnych rundach.");
-//        askUserForRowIfNeeded(game.d1() + game.d2());
 
         if (onEndRoundEnabled != null) {
             onEndRoundEnabled.run();
@@ -241,7 +238,6 @@ public class UIGrid extends FlexLayout {
         if (game.getRoundCount() >= 9) {
             System.out.println("\nFINAŁ!\n");
             System.out.println("Grę zakończono z wynikiem: " + game.getTotalPoints());
-            game.countFinalPoints();
             showEndGameDialog();
         }
     }
@@ -279,7 +275,7 @@ public class UIGrid extends FlexLayout {
             case DOM -> "\uD83C\uDFE0";      // 🏠
             case LAS -> "\uD83C\uDF33";      // 🌳
             case JEZIORO -> "\uD83C\uDF0A";  // 🌊
-            case FABRYKA -> "⚙️";
+            case FABRYKA -> "⚙️";            //
             case PLAC -> "\uD83D\uDDFD";     // 🗽
         };
     }
@@ -295,7 +291,7 @@ public class UIGrid extends FlexLayout {
 
             List<Integer> colsForCol1 = game.hasFreeSpaceInColumn(col1)
                     ? List.of(col1)
-                    : game.findFreerColumnsRecursive(col1, 1);
+                    : game.findFreerColumnsRecursive(col1,col2,1);
 
             for (int c : colsForCol1) {
                 highlightColumn(c);
@@ -304,7 +300,7 @@ public class UIGrid extends FlexLayout {
 
             List<Integer> colsForCol2 = game.hasFreeSpaceInColumn(col2)
                     ? List.of(col2)
-                    : game.findFreerColumnsRecursive(col2, 1);
+                    : game.findFreerColumnsRecursive(col2, col1, 1);
 
             for (int c : colsForCol2) {
                 highlightColumn(c);
@@ -313,13 +309,16 @@ public class UIGrid extends FlexLayout {
 
         } else {
             int col = game.d1() - 1;
-            List<Integer> cols = game.hasFreeSpaceInColumn(col)
-                    ? List.of(col)
-                    : game.findFreerColumnsRecursive(col, 1);
+            if (game.hasFreeSpaceInColumn(col)) {
+                highlightColumn(col);
+                activeColumnUsage.put(col, 2);
+            } else {
+                List<Integer> cols = game.findFreerColumnsRecursive(col, col, 1);
 
-            for (int c : cols) {
-                highlightColumn(c);
-                activeColumnUsage.put(c, activeColumnUsage.getOrDefault(c, 0) + 2);
+                for (int c : cols) {
+                    highlightColumn(c);
+                    activeColumnUsage.put(c, 2);
+                }
             }
         }
     }
@@ -421,6 +420,7 @@ public class UIGrid extends FlexLayout {
     }
 
     public void showEndGameDialog() {
+        game.countFinalPoints();
         Dialog dialog = new Dialog();
         H2 title = new H2("Koniec gry!");
         title.getStyle().set("margin", "0");

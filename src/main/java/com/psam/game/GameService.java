@@ -24,6 +24,7 @@ public class GameService {
 
     private static final int MAX_ROUNDS = 9;
     private RoundSnapshot snapshot;
+    private int placeCount = 0;
 
     private final Random rng = new Random();
     private final Board board = new Board();
@@ -69,11 +70,12 @@ public class GameService {
         if (isGameOver())
             throw new IllegalStateException("Gra już się zakończyła!");
 
-        lastD1 = 1;
-        lastD2 = 2;
+        lastD1 = 1 + rng.nextInt(6);
+        lastD2 = 1 + rng.nextInt(6);
         resetRoundFlags();
         roundActive = true;
         saveSnapshot();
+        placeCount = 0;
     }
 
     public record PlaceResult(Project project, int row, int col, String message, boolean roundEnded) {}
@@ -110,15 +112,24 @@ public class GameService {
 
         int targetColumn1 = lastD1 - 1;
         int targetColumn2 = lastD2 - 1;
+        System.out.println("---- PLACE CALLED ----");
+        System.out.println("Row = " + row + ", Col = " + chosenColumn);
+        System.out.println("RoundActive = " + roundActive);
+        System.out.println("waitingForSecondPlacementAfterDouble = " + waitingForSecondPlacementAfterDouble);
+        System.out.println("firstColumnUsed = " + firstColumnUsed + ", secondColumnUsed = " + secondColumnUsed);
+        System.out.println("lastD1 = " + lastD1 + ", lastD2 = " + lastD2 + "\n");
+
+        System.out.println("Initial targetColumn1 = " + targetColumn1);
+        System.out.println("Initial targetColumn2 = " + targetColumn2 + "\n");
         if (!hasFreeSpaceInColumn(targetColumn1)) {
-            List<Integer> freer = findFreerColumnsRecursive(targetColumn1, 1);
+            List<Integer> freer = findFreerColumnsRecursive(targetColumn1, targetColumn2, 1);
             if (!freer.isEmpty()) {
                 targetColumn1 = freer.get(0);
             }
         }
 
         if (!hasFreeSpaceInColumn(targetColumn2)) {
-            List<Integer> freer = findFreerColumnsRecursive(targetColumn2, 1);
+            List<Integer> freer = findFreerColumnsRecursive(targetColumn2, targetColumn1, 1);
             if (!freer.isEmpty()) {
                 targetColumn2 = freer.get(0);
             }
@@ -126,6 +137,11 @@ public class GameService {
 
         boolean isFirstCol = chosenColumn == targetColumn1;
         boolean isSecondCol = chosenColumn == targetColumn2;
+
+        System.out.println("FINAL targetColumn1 = " + targetColumn1);
+        System.out.println("FINAL targetColumn2 = " + targetColumn2);
+        System.out.println("chosenColumn == targetColumn1 ? " + (chosenColumn == targetColumn1));
+        System.out.println("chosenColumn == targetColumn2 ? " + (chosenColumn == targetColumn2) + "\n");
 
         Project project;
         int gainedPoints;
@@ -141,10 +157,14 @@ public class GameService {
 
             String msg = "Drugi ruch po dublecie: postawiono Plac w kolumnie " + (chosenColumn + 1)
                     + (isOver ? " Runda zakończona!" : "");
+            System.out.println("→ DRUGI RUCH PO DUBLECIE (waitingForSecondPlacementAfterDouble=true)" + "\n");
             return new PlaceResult(project, row, chosenColumn, msg, isOver);
+
         }
 
         if (isDouble(lastD1, lastD2)) {
+            System.out.println("→ DUBEL WYKRYTY! (d1=d2)");
+            System.out.println("Pierwszy projekt: " + rollToProject(lastD1) + "\n");
             project = rollToProject(lastD1);
             board.set(row, targetColumn1, project);
 
@@ -157,6 +177,8 @@ public class GameService {
         }
 
         if (isSame(rollToProject(lastD1), rollToProject(lastD2))) {
+            System.out.println("→ SPECJALNY RUCH (isSame=true)");
+            System.out.println("placed = " + placed + "\n");
             if (!placed) {
                 project = rollToProject(isFirstCol ? lastD2 : lastD1);
                 placed = true;
@@ -167,14 +189,23 @@ public class GameService {
             }
         }
 
+        System.out.println("→ STANDARDOWY RUCH");
+        System.out.println("isFirstCol = " + isFirstCol + ", firstColumnUsed = " + firstColumnUsed);
+        System.out.println("isSecondCol = " + isSecondCol + ", secondColumnUsed = " + secondColumnUsed + "\n");
+
+
         if (isFirstCol && !firstColumnUsed) {
             project = rollToProject(lastD2);
             firstColumnUsed = true;
-        } else if (isSecondCol && !secondColumnUsed) {
+            placeCount++;
+        } else if (isSecondCol && !secondColumnUsed || !secondColumnUsed && placeCount != 0) {
             project = rollToProject(lastD1);
             secondColumnUsed = true;
         }
         else {
+            System.out.println("❌ ERROR: próba postawienia w kolumnie " + chosenColumn);
+            System.out.println("targetColumn1 = " + targetColumn1 + ", used = " + firstColumnUsed);
+            System.out.println("targetColumn2 = " + targetColumn2 + ", used = " + secondColumnUsed + "\n");
             throw new IllegalStateException("W tej kolumnie już postawiono budynek!");
         }
 
@@ -185,6 +216,9 @@ public class GameService {
 
         String msg = "Ruch: " + project + " w kolumnie " + (chosenColumn + 1)
                          + (isOver ? " Runda zakończona!" : "");
+        System.out.println("→ PLACED PROJECT = " + project);
+        System.out.println("firstColumnUsed = " + firstColumnUsed + ", secondColumnUsed = " + secondColumnUsed);
+        System.out.println("---------------------------");
         return new PlaceResult(project, row, chosenColumn, msg, isOver);
     }
 
@@ -287,7 +321,7 @@ public class GameService {
         return false;
     }
 
-    public List<Integer> findFreerColumnsRecursive(int col, int step) {
+    public List<Integer> findFreerColumnsRecursive(int col, int otherCol, int step) {
         int rows = board.getRowCount();
         int cols = board.getColCount();
         List<Integer> result = new ArrayList<>();
@@ -295,40 +329,33 @@ public class GameService {
         int lowerCol = col - step;
         int upperCol = col + step;
 
-        int freeLower = 0;
-        int freeUpper = 0;
+        int freeLower = (lowerCol >= 0) ? countFree(lowerCol) : 0;
+        int freeUpper = (upperCol < cols) ? countFree(upperCol) : 0;
 
-        if (lowerCol >= 0) {
-            for (int row = 0; row < rows; row++) {
-                if (board.get(row, lowerCol) == null) freeLower++;
-            }
+        if (lowerCol >= 0)
             System.out.println("Kolumna " + lowerCol + " ma " + freeLower + " wolnych pól");
-        }
-
-        if (upperCol < cols) {
-            for (int row = 0; row < rows; row++) {
-                if (board.get(row, upperCol) == null) freeUpper++;
-            }
+        if (upperCol < cols)
             System.out.println("Kolumna " + upperCol + " ma " + freeUpper + " wolnych pól");
-        }
 
         if (freeLower > 0 || freeUpper > 0) {
-            if (freeLower > freeUpper) {
-                System.out.println("Wybieram kolumnę " + lowerCol + " (więcej miejsca niż po prawej)");
-                result.add(lowerCol);
-            } else if (freeUpper > freeLower) {
-                System.out.println("Wybieram kolumnę " + upperCol + " (więcej miejsca niż po lewej)");
-                result.add(upperCol);
-            } else if (freeLower == freeUpper && freeLower > 0) {
-                int chosen = Math.min(lowerCol, upperCol);
-                System.out.println(
-                        "Kolumny " + lowerCol + " i " + upperCol +
-                                " mają tyle samo wolnego miejsca (" + freeLower +
-                                "), wybieram kolumnę o niższym indeksie: " + chosen
-                );
-                result.add(chosen);
+
+            int chosen = -1;
+
+            if (freeLower > freeUpper) chosen = lowerCol;
+            else if (freeUpper > freeLower) chosen = upperCol;
+            else if (freeLower == freeUpper && freeLower > 0)
+                chosen = Math.min(lowerCol, upperCol);
+
+            if (chosen == otherCol && countFree(chosen) == 1) {
+                System.out.println("⚠ Kolumna " + chosen +
+                        " ma tylko 1 miejsce i jest zarezerwowana dla drugiej kostki – szukam dalej!");
+                return findFreerColumnsRecursive(col, otherCol, step + 1);
             }
-            return result;
+
+            if (chosen >= 0) {
+                result.add(chosen);
+                return result;
+            }
         }
 
         boolean canGoLeft = lowerCol >= 0;
@@ -339,9 +366,18 @@ public class GameService {
             return result;
         }
 
-        System.out.println("Nie znaleziono wolnych miejsc, idę dalej w kroku " + (step + 1));
-        return findFreerColumnsRecursive(col, step + 1);
+        System.out.println("Nie znaleziono bezpiecznych kolumn, idę dalej krok " + (step + 1));
+        return findFreerColumnsRecursive(col, otherCol, step + 1);
     }
+
+    private int countFree(int col) {
+        int free = 0;
+        for (int row = 0; row < board.getRowCount(); row++) {
+            if (board.get(row, col) == null) free++;
+        }
+        return free;
+    }
+
 
 
     public int calculatePointsForRow(int targetRow) {
@@ -630,6 +666,7 @@ public class GameService {
         firstColumnUsed = false;
         secondColumnUsed = false;
         placed = false;
+        highlightAllColumns = false;
         roundPoints = 0;
     }
 }
