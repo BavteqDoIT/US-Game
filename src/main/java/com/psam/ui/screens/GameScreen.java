@@ -103,26 +103,26 @@ public class GameScreen extends VerticalLayout {
                     String project1 = game.rollToProject(d1).name();
                     String project2 = game.rollToProject(d2).name();
 
-                    boolean d1Free = game.hasFreeSpaceInColumn(d1 - 1);
-                    boolean d2Free = game.hasFreeSpaceInColumn(d2 - 1);
+                    boolean d1Free = game.hasFreeSpaceInColumn(d2 - 1);
+                    boolean d2Free = game.hasFreeSpaceInColumn(d1 - 1);
 
                     String msg1;
                     String msg2;
 
                     if (d1Free) {
-                        msg1 = project1 + " w kolumnie " + d2;
+                        msg1 = "→ możesz postawić " + project1 + " w kolumnie " + d2;
                     } else {
-                        msg1 = "kolumna " + d2 + " (dla " + project1 + ") jest przepełniona — postaw budynek w podświetlonej kolumnie";
+                        msg1 = "kolumna " + d2 + " (dla " + project1 + ") jest przepełniona — postaw budynek w podświetlonej zastępczej kolumnie";
                     }
 
                     if (d2Free) {
                         msg2 = project2 + " w kolumnie " + d1;
                     } else {
-                        msg2 = "kolumna " + d1 + " (dla " + project2 + ") jest przepełniona — postaw budynek w podświetlonej kolumnie";
+                        msg2 = "kolumna " + d1 + " (dla " + project2 + ") jest przepełniona — postaw budynek w podświetlonej zastępczej kolumnie";
                     }
 
                     lastRollMessage =
-                            "Wyrzuciłeś: 🎲 " + d1 + " i 🎲 " + d2 + " → możesz postawić " +
+                            "Wyrzuciłeś: 🎲 " + d1 + " i 🎲 " + d2 + " " +
                                     msg1 + " oraz " + msg2;
                 }
                 messageService.log(lastRollMessage);
@@ -145,6 +145,7 @@ public class GameScreen extends VerticalLayout {
                 }
                 if (game.getRoundCount() >= 9) {
                     showEndGameButton(grid);
+                    messageService.log("Gratulacje! Zakończyłeś grę z wynikiem " + game.getTotalPoints() + " punktów!");
                 }
             } catch (Exception exception){
                 messageService.log(exception.getMessage());
