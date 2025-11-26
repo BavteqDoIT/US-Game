@@ -20,6 +20,7 @@ public class UIGrid extends FlexLayout {
 
     private final int rows = 5;
     private final int cols = 6;
+    private boolean isOver = false;
     private final Div[][] cells = new Div[rows][cols];
     private final GameService game;
     private final Set<Integer> activeColumns = new HashSet<>();
@@ -421,7 +422,10 @@ public class UIGrid extends FlexLayout {
     }
 
     public void showEndGameDialog() {
-        game.countFinalPoints();
+        if (!isOver){
+            game.countFinalPoints();
+            isOver = true;
+        }
         Dialog dialog = new Dialog();
         H2 title = new H2("Koniec gry!");
         title.getStyle().set("margin", "0");
