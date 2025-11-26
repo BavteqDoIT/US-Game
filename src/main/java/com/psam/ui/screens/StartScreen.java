@@ -1,29 +1,26 @@
-package com.psam.ui.utils;
+package com.psam.ui.screens;
 
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.router.Route;
 
-public class StartMenu extends VerticalLayout {
+@Route("")
+public class StartScreen extends VerticalLayout {
 
-    private Button startButton;
-
-    public StartMenu(Runnable ignored) {
+    public StartScreen() {
         setSizeFull();
         setAlignItems(FlexComponent.Alignment.CENTER);
         setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
 
-        H3 title = new H3("City Roller — MVP");
+        H1 title = new H1("US-Game");
 
-        startButton = new Button("Start");
+        Button startButton = new Button("Start", e -> UI.getCurrent().navigate(GameScreen.class));
         startButton.getStyle().set("font-size", "24px");
         startButton.getStyle().set("padding", "20px 40px");
 
         add(title, startButton);
-    }
-
-    public void setStartAction(Runnable action) {
-        startButton.addClickListener(e -> action.run());
     }
 }
